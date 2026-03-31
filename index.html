@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="買い物リスト">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>買い物リスト</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <h1 class="header__title">🛒 買い物リスト</h1>
+    <button class="header__action" id="headerAction" aria-label="完了済みを削除" style="display:none;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    </button>
+  </header>
+
+  <!-- View: List -->
+  <main class="view view--active" id="viewList">
+    <div class="item-list" id="itemList"></div>
+    <div class="empty-state" id="emptyList">
+      <div class="empty-state__icon">🛍️</div>
+      <p class="empty-state__title">リストは空です</p>
+      <p class="empty-state__sub">＋ボタンで商品を追加しましょう</p>
+    </div>
+  </main>
+
+  <!-- View: History -->
+  <main class="view" id="viewHistory">
+    <div class="history-list" id="historyList"></div>
+    <div class="empty-state" id="emptyHistory">
+      <div class="empty-state__icon">📋</div>
+      <p class="empty-state__title">履歴はまだありません</p>
+      <p class="empty-state__sub">買い物を完了すると履歴に記録されます</p>
+    </div>
+  </main>
+
+  <!-- View: Favorites -->
+  <main class="view" id="viewFavorites">
+    <div class="favorites-list" id="favoritesList"></div>
+    <div class="empty-state" id="emptyFavorites">
+      <div class="empty-state__icon">⭐</div>
+      <p class="empty-state__title">お気に入りはまだありません</p>
+      <p class="empty-state__sub">よく買う商品は自動で追加されます</p>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" id="fabAdd" aria-label="商品を追加">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-tab nav-tab--active" data-view="list">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      <span>リスト</span>
+    </button>
+    <button class="nav-tab" data-view="history">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      <span>履歴</span>
+    </button>
+    <button class="nav-tab" data-view="favorites">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      <span>お気に入り</span>
+    </button>
+  </nav>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+
+  <!-- Modal: Add/Edit Item -->
+  <div class="modal" id="itemModal">
+    <div class="modal__handle"></div>
+    <h2 class="modal__title" id="modalTitle">商品を追加</h2>
+    <form id="itemForm" autocomplete="off">
+      <div class="form-group">
+        <label for="inputName">商品名</label>
+        <input type="text" id="inputName" placeholder="例: 牛乳" required>
+      </div>
+      <div class="form-group">
+        <label>カテゴリ</label>
+        <div class="category-chips" id="categoryChips"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group form-group--half">
+          <label for="inputQuantity">数量</label>
+          <div class="quantity-control">
+            <button type="button" class="qty-btn" id="qtyMinus">−</button>
+            <input type="number" id="inputQuantity" value="1" min="1" max="99">
+            <button type="button" class="qty-btn" id="qtyPlus">＋</button>
+          </div>
+        </div>
+        <div class="form-group form-group--half">
+          <label for="inputUnit">単位</label>
+          <select id="inputUnit"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="inputMemo">メモ</label>
+        <input type="text" id="inputMemo" placeholder="例: 低脂肪タイプ">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--secondary" id="btnCancel">キャンセル</button>
+        <button type="submit" class="btn btn--primary" id="btnSubmit">追加</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Confirm Dialog -->
+  <div class="confirm-backdrop" id="confirmBackdrop"></div>
+  <div class="confirm-dialog" id="confirmDialog">
+    <p class="confirm-dialog__message" id="confirmMessage"></p>
+    <div class="confirm-dialog__actions">
+      <button class="btn btn--secondary" id="confirmCancel">キャンセル</button>
+      <button class="btn btn--danger" id="confirmOk">削除</button>
+    </div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
