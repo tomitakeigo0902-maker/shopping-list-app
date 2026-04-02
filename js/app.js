@@ -270,87 +270,158 @@ const App = (() => {
   }
 
   // === URL Fetch ===
+  const CORS_PROXIES = [
+    url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+    url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)
+  ];
+
+  async function fetchViaProxy(url) {
+    for (const makeProxy of CORS_PROXIES) {
+      try {
+        const proxyUrl = makeProxy(url);
+        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+        if (!res.ok) continue;
+        const text = await res.text();
+        // Reject if too short (likely error page) or clearly not HTML
+        if (text.length < 200) continue;
+        return text;
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  }
+
+  function extractTitle(doc, html) {
+    // 1. og:title
+    const ogTitle = doc.querySelector('meta[property="og:title"]');
+    if (ogTitle && ogTitle.getAttribute('content')) return ogTitle.getAttribute('content');
+    // 2. title tag
+    if (doc.title) return doc.title;
+    // 3. h1
+    const h1 = doc.querySelector('h1');
+    if (h1 && h1.textContent.trim()) return h1.textContent.trim();
+    // 4. Amazon specific: #productTitle
+    const amzTitle = doc.getElementById('productTitle');
+    if (amzTitle) return amzTitle.textContent.trim();
+    return '';
+  }
+
+  function extractPrice(doc, html) {
+    const extractors = [
+      // JSON-LD structured data
+      () => {
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        for (const s of scripts) {
+          try {
+            const json = JSON.parse(s.textContent);
+            const findPrice = (obj) => {
+              if (!obj || typeof obj !== 'object') return null;
+              if (obj.price != null) return String(obj.price).replace(/[^0-9.]/g, '');
+              if (obj.lowPrice != null) return String(obj.lowPrice).replace(/[^0-9.]/g, '');
+              if (obj.offers) return findPrice(obj.offers);
+              if (Array.isArray(obj)) {
+                for (const item of obj) { const r = findPrice(item); if (r) return r; }
+              }
+              for (const v of Object.values(obj)) {
+                if (v && typeof v === 'object') { const r = findPrice(v); if (r) return r; }
+              }
+              return null;
+            };
+            const p = findPrice(json);
+            if (p) return p.split('.')[0]; // integer yen
+          } catch {}
+        }
+        return null;
+      },
+      // og:price / product:price meta
+      () => {
+        const meta = doc.querySelector('meta[property="product:price:amount"], meta[property="og:price:amount"]');
+        return meta ? meta.getAttribute('content').replace(/[^0-9]/g, '') : null;
+      },
+      // Amazon specific: .a-price .a-offscreen or #priceblock_ourprice
+      () => {
+        const el = doc.querySelector('.a-price .a-offscreen, #priceblock_ourprice, #priceblock_dealprice, .a-price-whole, #corePrice_feature_div .a-offscreen');
+        if (el) {
+          const text = el.textContent.trim();
+          const m = text.match(/([\d,]+)/);
+          return m ? m[1].replace(/,/g, '') : null;
+        }
+        return null;
+      },
+      // Rakuten specific
+      () => {
+        const el = doc.querySelector('.price2, .important, [class*="price"] .value');
+        if (el) {
+          const m = el.textContent.match(/([\d,]+)/);
+          return m ? m[1].replace(/,/g, '') : null;
+        }
+        return null;
+      },
+      // Generic price patterns in HTML: ¥1,234 / ￥1,234 / 1,234円
+      () => {
+        // Look for price near keywords
+        const priceArea = html.match(/(?:価格|Price|price|販売価格|セール|sale)[^<]{0,100}[¥￥]\s*([\d,]+)/i);
+        if (priceArea) return priceArea[1].replace(/,/g, '');
+        const priceArea2 = html.match(/(?:価格|Price|price|販売価格)[^<]{0,100}([\d,]+)\s*円/i);
+        if (priceArea2) return priceArea2[1].replace(/,/g, '');
+        // Broader search
+        const m = html.match(/[¥￥]\s*([\d,]{3,})/);
+        if (m) return m[1].replace(/,/g, '');
+        const m2 = html.match(/([\d,]{3,})\s*円/);
+        if (m2) return m2[1].replace(/,/g, '');
+        return null;
+      }
+    ];
+
+    for (const fn of extractors) {
+      const result = fn();
+      if (result && result.length > 0 && result.length < 10 && parseInt(result) > 0) {
+        return result;
+      }
+    }
+    return '';
+  }
+
+  function cleanTitle(raw) {
+    if (!raw) return '';
+    // Remove common suffixes: " | Amazon", " - 楽天市場", etc.
+    let t = raw
+      .replace(/\s*[\|–\-:]\s*(Amazon|amazon|アマゾン|楽天市場|楽天|Yahoo|YAHOO|ヤフー|ZOZOTOWN|メルカリ|PayPay)[^|–\-]*$/i, '')
+      .replace(/\s*[\|–\-]\s*[^|–\-]*$/, '')
+      .replace(/【[^】]*】/g, '')
+      .replace(/\[[^\]]*\]/g, '')
+      .trim();
+    if (t.length > 80) t = t.substring(0, 80);
+    return t;
+  }
+
   async function fetchUrlInfo(url) {
     const btn = document.getElementById('btnFetchUrl');
-    const status = document.getElementById('urlStatus');
+    const statusEl = document.getElementById('urlStatus');
     const btnText = btn.querySelector('.btn-url-fetch__text');
     const btnLoading = btn.querySelector('.btn-url-fetch__loading');
 
     btn.classList.add('btn-url-fetch--loading');
     btnText.style.display = 'none';
     btnLoading.style.display = 'inline';
-    status.textContent = '読み取り中...';
-    status.className = 'url-status';
+    statusEl.textContent = '読み取り中...';
+    statusEl.className = 'url-status';
 
     try {
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-      if (!res.ok) throw new Error('取得失敗');
-      const html = await res.text();
+      const html = await fetchViaProxy(url);
+      if (!html) throw new Error('取得失敗');
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      // Extract title: og:title > title tag
-      const ogTitle = doc.querySelector('meta[property="og:title"]');
-      const title = ogTitle ? ogTitle.getAttribute('content') : doc.title || '';
+      const rawTitle = extractTitle(doc, html);
+      const title = cleanTitle(rawTitle);
+      const price = extractPrice(doc, html);
 
-      // Extract price from common patterns
-      let price = '';
-      const pricePatterns = [
-        // JSON-LD
-        () => {
-          const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-          for (const s of scripts) {
-            try {
-              const json = JSON.parse(s.textContent);
-              const findPrice = (obj) => {
-                if (!obj || typeof obj !== 'object') return null;
-                if (obj.price) return String(obj.price).replace(/[^0-9]/g, '');
-                if (obj.lowPrice) return String(obj.lowPrice).replace(/[^0-9]/g, '');
-                if (obj.offers) return findPrice(obj.offers);
-                if (Array.isArray(obj)) {
-                  for (const item of obj) { const r = findPrice(item); if (r) return r; }
-                }
-                return null;
-              };
-              const p = findPrice(json);
-              if (p) return p;
-            } catch {}
-          }
-          return null;
-        },
-        // og:price meta tags
-        () => {
-          const meta = doc.querySelector('meta[property="product:price:amount"], meta[property="og:price:amount"]');
-          return meta ? meta.getAttribute('content').replace(/[^0-9]/g, '') : null;
-        },
-        // Common price patterns in HTML text
-        () => {
-          const text = html;
-          // Match ¥1,234 or ￥1,234 or 1,234円
-          const m = text.match(/[¥￥]\s*([\d,]+)/);
-          if (m) return m[1].replace(/,/g, '');
-          const m2 = text.match(/([\d,]+)\s*円/);
-          if (m2) return m2[1].replace(/,/g, '');
-          return null;
-        }
-      ];
-
-      for (const fn of pricePatterns) {
-        const result = fn();
-        if (result && result.length > 0 && result.length < 10) {
-          price = result;
-          break;
-        }
-      }
-
-      // Apply results
       if (title) {
-        // Clean up title (remove site name suffixes like " | Amazon" etc.)
-        let cleanTitle = title.replace(/\s*[\|–\-]\s*[^|–\-]*$/, '').trim();
-        if (cleanTitle.length > 60) cleanTitle = cleanTitle.substring(0, 60);
-        document.getElementById('inputName').value = cleanTitle;
+        document.getElementById('inputName').value = title;
       }
       if (price) {
         document.getElementById('inputPrice').value = price;
@@ -361,15 +432,15 @@ const App = (() => {
       if (price) parts.push('価格を取得');
 
       if (parts.length > 0) {
-        status.textContent = '✓ ' + parts.join('・');
-        status.className = 'url-status url-status--success';
+        statusEl.textContent = '✓ ' + parts.join('・');
+        statusEl.className = 'url-status url-status--success';
       } else {
-        status.textContent = '情報を取得できませんでした';
-        status.className = 'url-status url-status--error';
+        statusEl.textContent = '情報を取得できませんでした（サイトが対応していない可能性があります）';
+        statusEl.className = 'url-status url-status--error';
       }
     } catch (e) {
-      status.textContent = '読み取りに失敗しました';
-      status.className = 'url-status url-status--error';
+      statusEl.textContent = '読み取りに失敗しました（別のURLを試してみてください）';
+      statusEl.className = 'url-status url-status--error';
     } finally {
       btn.classList.remove('btn-url-fetch--loading');
       btnText.style.display = 'inline';
