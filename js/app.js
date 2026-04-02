@@ -390,6 +390,7 @@ const App = (() => {
     let t = raw
       .replace(/\s*[\|–\-:]\s*(Amazon|amazon|アマゾン|楽天市場|楽天|Yahoo|YAHOO|ヤフー|ZOZOTOWN|メルカリ|PayPay)[^|–\-]*$/i, '')
       .replace(/\s*[\|–\-]\s*[^|–\-]*$/, '')
+      .replace(/^(by\s+Amazon\s+|Amazon\.co\.jp[:\s]*|Amazon[:\s]+)/i, '')
       .replace(/【[^】]*】/g, '')
       .replace(/\[[^\]]*\]/g, '')
       .trim();
