@@ -657,6 +657,117 @@ button {
   border-color: transparent;
 }
 
+/* === URL Input === */
+.url-input-row {
+  display: flex;
+  gap: var(--sp-sm);
+}
+
+.url-input-row input[type="url"] {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  background: var(--color-surface);
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+
+.url-input-row input[type="url"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.btn-url-fetch {
+  flex-shrink: 0;
+  padding: 0 14px;
+  background: #2196F3;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 42px;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s;
+}
+
+.btn-url-fetch:active {
+  background: #1976D2;
+}
+
+.btn-url-fetch--loading {
+  background: #90CAF9;
+  pointer-events: none;
+}
+
+.url-status {
+  font-size: 0.8rem;
+  margin-top: var(--sp-xs);
+  min-height: 1.2em;
+}
+
+.url-status--success {
+  color: var(--color-primary);
+}
+
+.url-status--error {
+  color: var(--color-danger);
+}
+
+/* === Price Input === */
+.price-input {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.price-input:focus-within {
+  border-color: var(--color-primary);
+}
+
+.price-input__prefix {
+  padding: 0 8px 0 12px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.price-input input[type="number"] {
+  flex: 1;
+  border: none;
+  padding: 10px 12px 10px 0;
+  font-size: 1rem;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+
+.price-input input[type="number"]::-webkit-inner-spin-button,
+.price-input input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+.price-input input:focus {
+  outline: none;
+}
+
+/* === Price badge in list === */
+.item-card__price {
+  flex-shrink: 0;
+  background: #FFF3E0;
+  color: #E65100;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
 /* === Buttons === */
 .form-actions {
   display: flex;

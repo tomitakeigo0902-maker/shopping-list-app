@@ -11,6 +11,7 @@ const CATEGORIES = [
   { key: '調味料',     color: '#AB47BC', icon: '🧂' },
   { key: '冷凍食品',   color: '#4FC3F7', icon: '🧊' },
   { key: '日用品',     color: '#78909C', icon: '🧴' },
+  { key: '欲しいもの', color: '#E91E63', icon: '💍' },
   { key: 'その他',     color: '#BDBDBD', icon: '📦' }
 ];
 
@@ -65,6 +66,8 @@ const Store = (() => {
         quantity: item.quantity || 1,
         unit: item.unit || '個',
         memo: item.memo || '',
+        price: item.price || '',
+        url: item.url || '',
         checked: false,
         createdAt: Date.now(),
         sortOrder: all.length

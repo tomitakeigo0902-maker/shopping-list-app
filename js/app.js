@@ -185,6 +185,7 @@ const App = (() => {
     const qtyText = item.quantity > 1 || item.unit !== '個' ? `${item.quantity}${item.unit}` : '';
     const memoText = item.memo ? `📝 ${escapeHtml(item.memo)}` : '';
     const metaParts = [qtyText, memoText].filter(Boolean).join(' ');
+    const priceHtml = item.price ? `<span class="item-card__price">¥${Number(item.price).toLocaleString()}</span>` : '';
 
     return `<div class="item-card${checkedClass}" data-id="${item.id}">
       <div class="item-card__actions">
@@ -197,6 +198,7 @@ const App = (() => {
           <div class="item-card__name">${escapeHtml(item.name)}</div>
           ${metaParts ? `<div class="item-card__meta">${metaParts}</div>` : ''}
         </div>
+        ${priceHtml}
       </div>
     </div>`;
   }
@@ -267,6 +269,114 @@ const App = (() => {
     container.innerHTML = html;
   }
 
+  // === URL Fetch ===
+  async function fetchUrlInfo(url) {
+    const btn = document.getElementById('btnFetchUrl');
+    const status = document.getElementById('urlStatus');
+    const btnText = btn.querySelector('.btn-url-fetch__text');
+    const btnLoading = btn.querySelector('.btn-url-fetch__loading');
+
+    btn.classList.add('btn-url-fetch--loading');
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    status.textContent = '読み取り中...';
+    status.className = 'url-status';
+
+    try {
+      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) throw new Error('取得失敗');
+      const html = await res.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Extract title: og:title > title tag
+      const ogTitle = doc.querySelector('meta[property="og:title"]');
+      const title = ogTitle ? ogTitle.getAttribute('content') : doc.title || '';
+
+      // Extract price from common patterns
+      let price = '';
+      const pricePatterns = [
+        // JSON-LD
+        () => {
+          const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+          for (const s of scripts) {
+            try {
+              const json = JSON.parse(s.textContent);
+              const findPrice = (obj) => {
+                if (!obj || typeof obj !== 'object') return null;
+                if (obj.price) return String(obj.price).replace(/[^0-9]/g, '');
+                if (obj.lowPrice) return String(obj.lowPrice).replace(/[^0-9]/g, '');
+                if (obj.offers) return findPrice(obj.offers);
+                if (Array.isArray(obj)) {
+                  for (const item of obj) { const r = findPrice(item); if (r) return r; }
+                }
+                return null;
+              };
+              const p = findPrice(json);
+              if (p) return p;
+            } catch {}
+          }
+          return null;
+        },
+        // og:price meta tags
+        () => {
+          const meta = doc.querySelector('meta[property="product:price:amount"], meta[property="og:price:amount"]');
+          return meta ? meta.getAttribute('content').replace(/[^0-9]/g, '') : null;
+        },
+        // Common price patterns in HTML text
+        () => {
+          const text = html;
+          // Match ¥1,234 or ￥1,234 or 1,234円
+          const m = text.match(/[¥￥]\s*([\d,]+)/);
+          if (m) return m[1].replace(/,/g, '');
+          const m2 = text.match(/([\d,]+)\s*円/);
+          if (m2) return m2[1].replace(/,/g, '');
+          return null;
+        }
+      ];
+
+      for (const fn of pricePatterns) {
+        const result = fn();
+        if (result && result.length > 0 && result.length < 10) {
+          price = result;
+          break;
+        }
+      }
+
+      // Apply results
+      if (title) {
+        // Clean up title (remove site name suffixes like " | Amazon" etc.)
+        let cleanTitle = title.replace(/\s*[\|–\-]\s*[^|–\-]*$/, '').trim();
+        if (cleanTitle.length > 60) cleanTitle = cleanTitle.substring(0, 60);
+        document.getElementById('inputName').value = cleanTitle;
+      }
+      if (price) {
+        document.getElementById('inputPrice').value = price;
+      }
+
+      const parts = [];
+      if (title) parts.push('商品名を取得');
+      if (price) parts.push('価格を取得');
+
+      if (parts.length > 0) {
+        status.textContent = '✓ ' + parts.join('・');
+        status.className = 'url-status url-status--success';
+      } else {
+        status.textContent = '情報を取得できませんでした';
+        status.className = 'url-status url-status--error';
+      }
+    } catch (e) {
+      status.textContent = '読み取りに失敗しました';
+      status.className = 'url-status url-status--error';
+    } finally {
+      btn.classList.remove('btn-url-fetch--loading');
+      btnText.style.display = 'inline';
+      btnLoading.style.display = 'none';
+    }
+  }
+
   // === Modal ===
   function openModal(mode, item) {
     editingItemId = mode === 'edit' ? item.id : null;
@@ -277,6 +387,10 @@ const App = (() => {
     document.getElementById('inputName').value = item ? item.name : '';
     document.getElementById('inputQuantity').value = item ? item.quantity : 1;
     document.getElementById('inputMemo').value = item ? item.memo || '' : '';
+    document.getElementById('inputPrice').value = item ? item.price || '' : '';
+    document.getElementById('inputUrl').value = item ? item.url || '' : '';
+    document.getElementById('urlStatus').textContent = '';
+    document.getElementById('urlStatus').className = 'url-status';
 
     // Set unit
     const unitSelect = document.getElementById('inputUnit');
@@ -321,12 +435,15 @@ const App = (() => {
     const name = document.getElementById('inputName').value.trim();
     if (!name) return;
 
+    const priceVal = document.getElementById('inputPrice').value;
     const data = {
       name,
       category: selectedCategory,
       quantity: Math.max(1, Math.min(99, parseInt(document.getElementById('inputQuantity').value) || 1)),
       unit: document.getElementById('inputUnit').value,
-      memo: document.getElementById('inputMemo').value.trim()
+      memo: document.getElementById('inputMemo').value.trim(),
+      price: priceVal ? parseInt(priceVal) : '',
+      url: document.getElementById('inputUrl').value.trim()
     };
 
     if (editingItemId) {
@@ -543,6 +660,14 @@ const App = (() => {
     document.getElementById('itemForm').addEventListener('submit', e => {
       e.preventDefault();
       handleModalSubmit();
+    });
+
+    // URL fetch button
+    document.getElementById('btnFetchUrl').addEventListener('click', () => {
+      const url = document.getElementById('inputUrl').value.trim();
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        fetchUrlInfo(url);
+      }
     });
 
     // Category chips delegation
