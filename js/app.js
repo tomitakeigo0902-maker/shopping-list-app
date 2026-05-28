@@ -13,7 +13,8 @@ const App = (() => {
   let touchStartY = 0;
   let touchCurrentX = 0;
   let swipingEl = null;
-  let swipeDirection = null; // 'left' | 'right' | null
+  let swipeDirection = null;
+  let startTranslateX = 0;
 
   // === Utility ===
   function escapeHtml(str) {
@@ -225,13 +226,18 @@ const App = (() => {
         const catInfo = Store.getCategoryInfo(item.category);
         const qty = item.quantity > 1 || item.unit !== '個' ? ` ${item.quantity}${item.unit}` : '';
         const priceHtml = item.price ? `<span class="history-item__price">¥${Number(item.price).toLocaleString()}</span>` : '';
-        html += `<div class="history-item" data-action="readd" data-name="${escapeHtml(item.itemName)}" data-category="${escapeHtml(item.category)}" data-quantity="${item.quantity}" data-unit="${escapeHtml(item.unit)}" data-memo="${escapeHtml(item.memo || '')}" data-price="${item.price || ''}" style="border-left-color:${catInfo.color}">
-          <div class="history-item__info">
-            <div class="history-item__name">${catInfo.icon} ${escapeHtml(item.itemName)}${qty}</div>
-            <div class="history-item__meta">${formatTime(item.checkedAt)}${item.memo ? ' · ' + escapeHtml(item.memo) : ''}</div>
+        html += `<div class="history-item" data-id="${item.id}">
+          <div class="history-item__actions">
+            <div class="history-item__action-delete" data-action="delete-hist" data-id="${item.id}">削除</div>
           </div>
-          ${priceHtml}
-          <div class="history-item__add">＋</div>
+          <div class="history-item__content" data-action="readd" data-name="${escapeHtml(item.itemName)}" data-category="${escapeHtml(item.category)}" data-quantity="${item.quantity}" data-unit="${escapeHtml(item.unit)}" data-memo="${escapeHtml(item.memo || '')}" data-price="${item.price || ''}" style="border-left-color:${catInfo.color}">
+            <div class="history-item__info">
+              <div class="history-item__name">${catInfo.icon} ${escapeHtml(item.itemName)}${qty}</div>
+              <div class="history-item__meta">${formatTime(item.checkedAt)}${item.memo ? ' · ' + escapeHtml(item.memo) : ''}</div>
+            </div>
+            ${priceHtml}
+            <div class="history-item__add">＋</div>
+          </div>
         </div>`;
       });
       html += '</div>';
@@ -533,16 +539,28 @@ const App = (() => {
   }
 
   // === Swipe Handling ===
-  function handleTouchStart(e) {
-    const card = e.target.closest('.item-card');
-    if (!card) return;
+  function getTranslateX(el) {
+    const t = el.style.transform || '';
+    const m = t.match(/translateX\((-?[\d.]+)px\)/);
+    return m ? parseFloat(m[1]) : 0;
+  }
 
-    const content = card.querySelector('.item-card__content');
+  function findSwipeContent(target) {
+    const row = target.closest('.item-card, .history-item');
+    if (!row) return null;
+    return row.classList.contains('item-card')
+      ? row.querySelector('.item-card__content')
+      : row.querySelector('.history-item__content');
+  }
+
+  function handleTouchStart(e) {
+    const content = findSwipeContent(e.target);
     if (!content) return;
 
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchCurrentX = touchStartX;
+    startTranslateX = getTranslateX(content);
     swipingEl = content;
     swipeDirection = null;
     content.style.transition = 'none';
@@ -555,19 +573,20 @@ const App = (() => {
     const diffX = touchCurrentX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
 
-    // Determine direction lock - only allow left swipe (delete)
+    // Determine direction lock
     if (swipeDirection === null && (Math.abs(diffX) > 8 || Math.abs(diffY) > 8)) {
-      if (Math.abs(diffY) > Math.abs(diffX) || diffX > 0) {
-        // Vertical scroll or right swipe - cancel
+      if (Math.abs(diffY) > Math.abs(diffX)) {
+        // Vertical scroll - restore and cancel
+        swipingEl.style.transform = `translateX(${startTranslateX}px)`;
         swipingEl = null;
         return;
       }
-      swipeDirection = 'left';
+      swipeDirection = 'horizontal';
     }
 
-    if (swipeDirection === 'left') {
-      const tx = Math.max(-160, Math.min(0, diffX));
-      swipingEl.style.transform = `translateX(${tx}px)`;
+    if (swipeDirection === 'horizontal') {
+      const targetX = Math.max(-160, Math.min(0, startTranslateX + diffX));
+      swipingEl.style.transform = `translateX(${targetX}px)`;
       e.preventDefault();
     }
   }
@@ -575,10 +594,10 @@ const App = (() => {
   function handleTouchEnd() {
     if (!swipingEl) return;
 
-    const diffX = touchCurrentX - touchStartX;
     swipingEl.style.transition = 'transform 0.2s ease';
+    const finalX = getTranslateX(swipingEl);
 
-    if (swipeDirection === 'left' && diffX < -60) {
+    if (finalX < -40) {
       swipingEl.style.transform = 'translateX(-80px)';
     } else {
       swipingEl.style.transform = 'translateX(0)';
@@ -589,7 +608,7 @@ const App = (() => {
   }
 
   function resetSwipes() {
-    document.querySelectorAll('.item-card__content').forEach(el => {
+    document.querySelectorAll('.item-card__content, .history-item__content').forEach(el => {
       el.style.transition = 'transform 0.2s ease';
       el.style.transform = 'translateX(0)';
     });
@@ -648,18 +667,31 @@ const App = (() => {
   }
 
   function handleHistoryClick(e) {
-    const target = e.target.closest('[data-action="readd"]');
+    const target = e.target.closest('[data-action]');
     if (!target) return;
 
-    Store.items.add({
-      name: target.dataset.name,
-      category: target.dataset.category,
-      quantity: parseInt(target.dataset.quantity) || 1,
-      unit: target.dataset.unit,
-      memo: target.dataset.memo,
-      price: target.dataset.price ? parseInt(target.dataset.price) : ''
-    });
-    showToast(`${target.dataset.name} をリストに追加`);
+    if (target.dataset.action === 'delete-hist') {
+      Store.history.removeById(target.dataset.id);
+      renderHistory();
+      const headerAction = document.getElementById('headerAction');
+      if (currentView === 'history' && Store.history.getAll().length === 0) {
+        headerAction.style.display = 'none';
+      }
+      showToast('履歴から削除');
+      return;
+    }
+
+    if (target.dataset.action === 'readd') {
+      Store.items.add({
+        name: target.dataset.name,
+        category: target.dataset.category,
+        quantity: parseInt(target.dataset.quantity) || 1,
+        unit: target.dataset.unit,
+        memo: target.dataset.memo,
+        price: target.dataset.price ? parseInt(target.dataset.price) : ''
+      });
+      showToast(`${target.dataset.name} をリストに追加`);
+    }
   }
 
   function handleFavoritesClick(e) {
@@ -729,11 +761,12 @@ const App = (() => {
     // Favorites events
     document.getElementById('favoritesList').addEventListener('click', handleFavoritesClick);
 
-    // Swipe on item list
-    const itemList = document.getElementById('itemList');
-    itemList.addEventListener('touchstart', handleTouchStart, { passive: true });
-    itemList.addEventListener('touchmove', handleTouchMove, { passive: false });
-    itemList.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // Swipe on item list and history list
+    [document.getElementById('itemList'), document.getElementById('historyList')].forEach(el => {
+      el.addEventListener('touchstart', handleTouchStart, { passive: true });
+      el.addEventListener('touchmove', handleTouchMove, { passive: false });
+      el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    });
 
     // Modal
     document.getElementById('modalBackdrop').addEventListener('click', closeModal);
