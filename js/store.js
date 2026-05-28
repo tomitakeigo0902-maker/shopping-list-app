@@ -17,6 +17,9 @@ const CATEGORIES = [
 
 const UNITS = ['個', '本', 'パック', '袋', '枚', '缶', '箱', 'g', 'kg', 'ml', 'L', ''];
 
+const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
+const FAVORITE_THRESHOLD = 3;
+
 const Store = (() => {
   const KEYS = {
     items: 'sl_items',
@@ -55,7 +58,10 @@ const Store = (() => {
   // Items
   const items = {
     getAll() {
-      return _read(KEYS.items, []);
+      const all = _read(KEYS.items, []);
+      const filtered = all.filter(i => !i.checked);
+      if (filtered.length !== all.length) _write(KEYS.items, filtered);
+      return filtered;
     },
     add(item) {
       const all = this.getAll();
@@ -88,41 +94,48 @@ const Store = (() => {
       const all = this.getAll().filter(i => i.id !== id);
       _write(KEYS.items, all);
     },
-    check(id) {
-      const all = this.getAll();
-      const item = all.find(i => i.id === id);
-      if (!item) return;
-      item.checked = !item.checked;
-      _write(KEYS.items, all);
-      if (item.checked) {
-        history.add({
-          itemName: item.name,
+    complete(id) {
+      const all = _read(KEYS.items, []);
+      const idx = all.findIndex(i => i.id === id);
+      if (idx === -1) return null;
+      const item = all[idx];
+
+      const histEntry = history.add({
+        itemName: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        unit: item.unit,
+        memo: item.memo
+      });
+
+      const cutoff = Date.now() - SIX_MONTHS_MS;
+      const recentCount = history.getAll().filter(h =>
+        h.itemName === item.name && h.checkedAt >= cutoff
+      ).length;
+      let autoFavorited = false;
+      if (recentCount >= FAVORITE_THRESHOLD && !favorites.getAll().find(f => f.name === item.name)) {
+        favorites.add({
+          name: item.name,
           category: item.category,
           quantity: item.quantity,
           unit: item.unit,
           memo: item.memo
         });
-        // Auto-favorite: if item appears 2+ times in history
-        const histAll = history.getAll();
-        const count = histAll.filter(h => h.itemName === item.name).length;
-        if (count >= 2 && !favorites.getAll().find(f => f.name === item.name)) {
-          favorites.add({
-            name: item.name,
-            category: item.category,
-            quantity: item.quantity,
-            unit: item.unit,
-            memo: item.memo
-          });
-        }
+        autoFavorited = true;
       }
-      return item;
-    },
-    clearChecked() {
-      const all = this.getAll().filter(i => !i.checked);
+
+      all.splice(idx, 1);
       _write(KEYS.items, all);
+
+      return { item, historyId: histEntry.id, autoFavorited };
     },
-    hasChecked() {
-      return this.getAll().some(i => i.checked);
+    restore(item, historyId) {
+      const all = _read(KEYS.items, []);
+      if (!all.some(i => i.id === item.id)) {
+        all.push(item);
+        _write(KEYS.items, all);
+      }
+      if (historyId) history.removeById(historyId);
     }
   };
 
@@ -133,7 +146,7 @@ const Store = (() => {
     },
     add(entry) {
       const all = this.getAll();
-      all.unshift({
+      const newEntry = {
         id: _generateId('hist'),
         itemName: entry.itemName,
         category: entry.category,
@@ -141,9 +154,15 @@ const Store = (() => {
         unit: entry.unit,
         memo: entry.memo,
         checkedAt: Date.now()
-      });
+      };
+      all.unshift(newEntry);
       // Keep max 500 history entries
       if (all.length > 500) all.length = 500;
+      _write(KEYS.history, all);
+      return newEntry;
+    },
+    removeById(id) {
+      const all = this.getAll().filter(h => h.id !== id);
       _write(KEYS.history, all);
     },
     clear() {

@@ -168,6 +168,15 @@ button {
   overflow: hidden;
   border-radius: var(--radius-sm);
   margin-bottom: var(--sp-sm);
+  max-height: 200px;
+  transition: max-height 0.4s ease, opacity 0.4s ease, margin-bottom 0.4s ease;
+}
+
+.item-card--removing {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+  pointer-events: none;
 }
 
 .item-card__actions {
@@ -830,7 +839,6 @@ button {
   opacity: 0;
   pointer-events: none;
   transition: all 0.25s;
-  white-space: nowrap;
   max-width: 90vw;
   text-align: center;
 }
@@ -838,6 +846,35 @@ button {
 .toast--show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.toast--with-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 20px;
+  text-align: left;
+}
+
+.toast__message {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast__action {
+  color: #81C784;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: none;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.toast__action:active {
+  background: rgba(255,255,255,0.12);
 }
 
 /* === Confirm Dialog === */

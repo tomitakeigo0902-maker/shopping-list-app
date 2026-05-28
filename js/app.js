@@ -63,12 +63,42 @@ const App = (() => {
   }
 
   // === Toast ===
-  function showToast(message, duration = 2000) {
+  function showToast(message, optionsOrDuration = 2000) {
+    const opts = typeof optionsOrDuration === 'number'
+      ? { duration: optionsOrDuration }
+      : optionsOrDuration;
+    const duration = opts.duration || 2000;
+    const action = opts.action || null;
+
     const el = document.getElementById('toast');
-    el.textContent = message;
+    el.innerHTML = '';
+    el.classList.toggle('toast--with-action', !!action);
+
+    const msg = document.createElement('span');
+    msg.className = 'toast__message';
+    msg.textContent = message;
+    el.appendChild(msg);
+
+    if (action) {
+      const btn = document.createElement('button');
+      btn.className = 'toast__action';
+      btn.textContent = action.label;
+      btn.addEventListener('click', () => {
+        action.callback();
+        hideToast();
+      });
+      el.appendChild(btn);
+    }
+
     el.classList.add('toast--show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('toast--show'), duration);
+    toastTimer = setTimeout(hideToast, duration);
+  }
+
+  function hideToast() {
+    const el = document.getElementById('toast');
+    el.classList.remove('toast--show');
+    el.classList.remove('toast--with-action');
   }
 
   // === Confirm Dialog ===
@@ -104,8 +134,7 @@ const App = (() => {
     if (viewName === 'list') {
       fab.classList.remove('fab--hidden');
       headerTitle.textContent = '🛒 買い物リスト';
-      headerAction.style.display = Store.items.hasChecked() ? 'flex' : 'none';
-      headerAction.setAttribute('aria-label', '完了済みを削除');
+      headerAction.style.display = 'none';
       renderList();
     } else if (viewName === 'history') {
       fab.classList.add('fab--hidden');
@@ -135,14 +164,8 @@ const App = (() => {
     }
     empty.style.display = 'none';
 
-    // Separate unchecked and checked
-    const unchecked = items.filter(i => !i.checked);
-    const checked = items.filter(i => i.checked);
-
     let html = '';
-
-    // Render unchecked items grouped by category
-    const groups = groupByCategory(unchecked);
+    const groups = groupByCategory(items);
     groups.forEach(group => {
       const catInfo = Store.getCategoryInfo(group.category);
       html += `<div class="category-group">
@@ -156,44 +179,21 @@ const App = (() => {
       html += '</div>';
     });
 
-    // Render checked items at the bottom
-    if (checked.length > 0) {
-      html += `<div class="category-group">
-        <div class="category-group__header">
-          <span class="category-group__dot" style="background:var(--color-checked)"></span>
-          <span>✅ 完了済み (${checked.length})</span>
-        </div>`;
-      checked.forEach(item => {
-        const catInfo = Store.getCategoryInfo(item.category);
-        html += renderItemCard(item, catInfo);
-      });
-      html += '</div>';
-    }
-
     container.innerHTML = html;
-
-    // Update header action visibility
-    const headerAction = document.getElementById('headerAction');
-    if (currentView === 'list') {
-      headerAction.style.display = Store.items.hasChecked() ? 'flex' : 'none';
-    }
   }
 
   function renderItemCard(item, catInfo) {
-    const checkedClass = item.checked ? ' item-card--checked' : '';
-    const checkClass = item.checked ? ' item-card__check--checked' : '';
     const qtyText = item.quantity > 1 || item.unit !== '個' ? `${item.quantity}${item.unit}` : '';
     const memoText = item.memo ? `📝 ${escapeHtml(item.memo)}` : '';
     const metaParts = [qtyText, memoText].filter(Boolean).join(' ');
     const priceHtml = item.price ? `<span class="item-card__price">¥${Number(item.price).toLocaleString()}</span>` : '';
 
-    return `<div class="item-card${checkedClass}" data-id="${item.id}">
+    return `<div class="item-card" data-id="${item.id}">
       <div class="item-card__actions">
-        <div class="item-card__action-fav" data-action="fav" data-id="${item.id}">⭐</div>
         <div class="item-card__action-delete" data-action="delete" data-id="${item.id}">削除</div>
       </div>
       <div class="item-card__content" style="border-left-color:${catInfo.color}">
-        <div class="item-card__check${checkClass}" data-action="check" data-id="${item.id}"></div>
+        <div class="item-card__check" data-action="check" data-id="${item.id}"></div>
         <div class="item-card__info" data-action="edit" data-id="${item.id}">
           <div class="item-card__name">${escapeHtml(item.name)}</div>
           ${metaParts ? `<div class="item-card__meta">${metaParts}</div>` : ''}
@@ -553,22 +553,18 @@ const App = (() => {
     const diffX = touchCurrentX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
 
-    // Determine direction lock
+    // Determine direction lock - only allow left swipe (delete)
     if (swipeDirection === null && (Math.abs(diffX) > 8 || Math.abs(diffY) > 8)) {
-      if (Math.abs(diffY) > Math.abs(diffX)) {
-        // Vertical scroll - cancel swipe
+      if (Math.abs(diffY) > Math.abs(diffX) || diffX > 0) {
+        // Vertical scroll or right swipe - cancel
         swipingEl = null;
         return;
       }
-      swipeDirection = diffX < 0 ? 'left' : 'right';
+      swipeDirection = 'left';
     }
 
     if (swipeDirection === 'left') {
       const tx = Math.max(-160, Math.min(0, diffX));
-      swipingEl.style.transform = `translateX(${tx}px)`;
-      e.preventDefault();
-    } else if (swipeDirection === 'right') {
-      const tx = Math.max(0, Math.min(160, diffX));
       swipingEl.style.transform = `translateX(${tx}px)`;
       e.preventDefault();
     }
@@ -582,8 +578,6 @@ const App = (() => {
 
     if (swipeDirection === 'left' && diffX < -60) {
       swipingEl.style.transform = 'translateX(-80px)';
-    } else if (swipeDirection === 'right' && diffX > 60) {
-      swipingEl.style.transform = 'translateX(80px)';
     } else {
       swipingEl.style.transform = 'translateX(0)';
     }
@@ -599,6 +593,38 @@ const App = (() => {
     });
   }
 
+  // === Complete (check) flow with fade + undo ===
+  function handleCompleteItem(id) {
+    const card = document.querySelector(`.item-card[data-id="${id}"]`);
+    if (!card || card.classList.contains('item-card--removing')) return;
+
+    const checkEl = card.querySelector('.item-card__check');
+    if (checkEl) checkEl.classList.add('item-card__check--checked');
+    card.classList.add('item-card--removing');
+
+    setTimeout(() => {
+      const result = Store.items.complete(id);
+      renderList();
+      if (!result) return;
+
+      const { item, historyId, autoFavorited } = result;
+      const msg = autoFavorited
+        ? `「${item.name}」を購入済みに ⭐お気に入り登録`
+        : `「${item.name}」を購入済みに`;
+
+      showToast(msg, {
+        duration: 3000,
+        action: {
+          label: '元に戻す',
+          callback: () => {
+            Store.items.restore(item, historyId);
+            renderList();
+          }
+        }
+      });
+    }, 400);
+  }
+
   // === Event Handling ===
   function handleItemListClick(e) {
     const target = e.target.closest('[data-action]');
@@ -608,8 +634,7 @@ const App = (() => {
     const id = target.dataset.id;
 
     if (action === 'check') {
-      Store.items.check(id);
-      renderList();
+      handleCompleteItem(id);
     } else if (action === 'edit') {
       const item = Store.items.getAll().find(i => i.id === id);
       if (item) openModal('edit', item);
@@ -617,19 +642,6 @@ const App = (() => {
       Store.items.remove(id);
       showToast('削除しました');
       renderList();
-    } else if (action === 'fav') {
-      const item = Store.items.getAll().find(i => i.id === id);
-      if (item) {
-        Store.favorites.add({
-          name: item.name,
-          category: item.category,
-          quantity: item.quantity,
-          unit: item.unit,
-          memo: item.memo
-        });
-        showToast(`${item.name} をお気に入りに追加`);
-        resetSwipes();
-      }
     }
   }
 
@@ -675,13 +687,7 @@ const App = (() => {
   }
 
   function handleHeaderAction() {
-    if (currentView === 'list') {
-      showConfirm('完了済みの商品をすべて削除しますか？', '削除', () => {
-        Store.items.clearChecked();
-        renderList();
-        showToast('完了済みを削除しました');
-      });
-    } else if (currentView === 'history') {
+    if (currentView === 'history') {
       showConfirm('購入履歴をすべて削除しますか？', '削除', () => {
         Store.history.clear();
         renderHistory();
