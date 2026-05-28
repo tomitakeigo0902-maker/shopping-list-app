@@ -224,11 +224,13 @@ const App = (() => {
       group.items.forEach(item => {
         const catInfo = Store.getCategoryInfo(item.category);
         const qty = item.quantity > 1 || item.unit !== '個' ? ` ${item.quantity}${item.unit}` : '';
-        html += `<div class="history-item" data-action="readd" data-name="${escapeHtml(item.itemName)}" data-category="${escapeHtml(item.category)}" data-quantity="${item.quantity}" data-unit="${escapeHtml(item.unit)}" data-memo="${escapeHtml(item.memo || '')}" style="border-left-color:${catInfo.color}">
+        const priceHtml = item.price ? `<span class="history-item__price">¥${Number(item.price).toLocaleString()}</span>` : '';
+        html += `<div class="history-item" data-action="readd" data-name="${escapeHtml(item.itemName)}" data-category="${escapeHtml(item.category)}" data-quantity="${item.quantity}" data-unit="${escapeHtml(item.unit)}" data-memo="${escapeHtml(item.memo || '')}" data-price="${item.price || ''}" style="border-left-color:${catInfo.color}">
           <div class="history-item__info">
             <div class="history-item__name">${catInfo.icon} ${escapeHtml(item.itemName)}${qty}</div>
             <div class="history-item__meta">${formatTime(item.checkedAt)}${item.memo ? ' · ' + escapeHtml(item.memo) : ''}</div>
           </div>
+          ${priceHtml}
           <div class="history-item__add">＋</div>
         </div>`;
       });
@@ -654,7 +656,8 @@ const App = (() => {
       category: target.dataset.category,
       quantity: parseInt(target.dataset.quantity) || 1,
       unit: target.dataset.unit,
-      memo: target.dataset.memo
+      memo: target.dataset.memo,
+      price: target.dataset.price ? parseInt(target.dataset.price) : ''
     });
     showToast(`${target.dataset.name} をリストに追加`);
   }

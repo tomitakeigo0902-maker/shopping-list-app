@@ -330,6 +330,17 @@ button {
   color: var(--color-text-secondary);
 }
 
+.history-item__price {
+  flex-shrink: 0;
+  background: #FFF3E0;
+  color: #E65100;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
 .history-item__add {
   color: var(--color-primary);
   font-size: 1.2rem;

@@ -1,5 +1,5 @@
 // Service Worker - Cache-first strategy
-const CACHE_NAME = 'shopping-list-v5';
+const CACHE_NAME = 'shopping-list-v6';
 const ASSETS = [
   './',
   './index.html',

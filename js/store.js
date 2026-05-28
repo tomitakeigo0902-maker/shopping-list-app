@@ -105,7 +105,8 @@ const Store = (() => {
         category: item.category,
         quantity: item.quantity,
         unit: item.unit,
-        memo: item.memo
+        memo: item.memo,
+        price: item.price
       });
 
       const cutoff = Date.now() - SIX_MONTHS_MS;
@@ -153,6 +154,7 @@ const Store = (() => {
         quantity: entry.quantity,
         unit: entry.unit,
         memo: entry.memo,
+        price: entry.price || '',
         checkedAt: Date.now()
       };
       all.unshift(newEntry);
