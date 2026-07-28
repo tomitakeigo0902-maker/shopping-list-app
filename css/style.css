@@ -616,6 +616,16 @@ button {
   border-color: var(--color-primary);
 }
 
+.suggest-hint {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  margin-top: var(--sp-xs);
+}
+
+.suggest-hint:empty {
+  display: none;
+}
+
 .form-row {
   display: flex;
   gap: var(--sp-md);

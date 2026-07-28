@@ -8,6 +8,11 @@ const App = (() => {
   let confirmCallback = null;
   let toastTimer = null;
 
+  // Auto-suggest state: manual edits win over suggestions within a modal session
+  let categoryTouched = false;
+  let unitTouched = false;
+  let suggestTimer = null;
+
   // Touch swipe state
   let touchStartX = 0;
   let touchStartY = 0;
@@ -431,6 +436,7 @@ const App = (() => {
 
       if (title) {
         document.getElementById('inputName').value = title;
+        applySuggestion();
       }
       if (price) {
         document.getElementById('inputPrice').value = price;
@@ -481,6 +487,12 @@ const App = (() => {
     selectedCategory = item ? item.category : '食品';
     renderCategoryChips();
 
+    // 編集時は既存の値を尊重（自動サジェストで上書きしない）、追加時は自動サジェスト有効
+    categoryTouched = mode === 'edit';
+    unitTouched = mode === 'edit';
+    clearTimeout(suggestTimer);
+    document.getElementById('suggestHint').textContent = '';
+
     document.getElementById('modalBackdrop').classList.add('modal-backdrop--active');
     document.getElementById('itemModal').classList.add('modal--active');
 
@@ -509,6 +521,38 @@ const App = (() => {
     select.innerHTML = UNITS.map(u =>
       `<option value="${escapeHtml(u)}">${u || 'なし'}</option>`
     ).join('');
+  }
+
+  // === Auto-suggest category & unit from item name ===
+  function applySuggestion() {
+    const name = document.getElementById('inputName').value.trim();
+    const hintEl = document.getElementById('suggestHint');
+    if (!name || (categoryTouched && unitTouched)) {
+      hintEl.textContent = '';
+      return;
+    }
+
+    const s = Store.suggest(name);
+    if (!s) {
+      hintEl.textContent = '';
+      return;
+    }
+
+    const applied = [];
+    if (!categoryTouched && s.category && s.category !== selectedCategory) {
+      selectedCategory = s.category;
+      renderCategoryChips();
+    }
+    if (!categoryTouched && s.category) {
+      const catInfo = Store.getCategoryInfo(s.category);
+      applied.push(`${catInfo.icon} ${s.category}`);
+    }
+    if (!unitTouched && s.unit !== undefined) {
+      document.getElementById('inputUnit').value = s.unit;
+      applied.push(s.unit || '単位なし');
+    }
+
+    hintEl.textContent = applied.length ? `${applied.join(' / ')} を自動設定` : '';
   }
 
   function handleModalSubmit() {
@@ -789,8 +833,20 @@ const App = (() => {
       const chip = e.target.closest('.category-chip');
       if (chip) {
         selectedCategory = chip.dataset.category;
+        categoryTouched = true;
         renderCategoryChips();
       }
+    });
+
+    // Auto-suggest on name input (debounced)
+    document.getElementById('inputName').addEventListener('input', () => {
+      clearTimeout(suggestTimer);
+      suggestTimer = setTimeout(applySuggestion, 250);
+    });
+
+    // Manual unit change disables unit auto-suggest for this modal session
+    document.getElementById('inputUnit').addEventListener('change', () => {
+      unitTouched = true;
     });
 
     // Quantity buttons
