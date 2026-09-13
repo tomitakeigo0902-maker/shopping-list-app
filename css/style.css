@@ -1086,3 +1086,123 @@ button {
 .mode-switch { margin-top: 56px; top: 56px; }
 /* モード切替がヘッダー分の余白を担うので、各ビューの上余白は小さくする */
 .view { padding-top: 8px; }
+
+/* ==========================================================================
+   ブラッシュアップ: モノトーン基調 + 意味のある色だけ残す
+   - 普段の画面（タブ・フィルタ・FAB等）はグレー階調で統一
+   - 緑=完了 / 黄=進行中 / 赤=期限切れ のように、状態を表すときだけ色を使う
+   ========================================================================== */
+:root {
+  --tone-1: #1b1d21;   /* 背景 */
+  --tone-2: #24272f;   /* カード・ヘッダー */
+  --tone-3: #2f333d;   /* 一段持ち上げた面 */
+  --tone-4: #3a3f4b;   /* 枠線・非活性 */
+  --tone-on: #e8eaed;  /* 主要文字 */
+  --tone-sub: #9aa0aa; /* 補助文字 */
+}
+
+/* --- フォーム: 入力欄すべてをダーク化（type違いで白く残るのを防ぐ） --- */
+.form-group input,
+.form-group select,
+.form-group textarea,
+.modal input,
+.modal select,
+.modal textarea {
+  width: 100%;
+  color: var(--tone-on);
+  background: var(--tone-3);
+  border: 1.5px solid var(--tone-4);
+  border-radius: var(--radius-sm);
+  caret-color: var(--tone-on);
+}
+.form-group input::placeholder,
+.modal input::placeholder { color: #6f7681; }
+
+/* 単位などのドロップダウン: 選択肢側も暗く（黒文字が見えない問題の対策） */
+.form-group select option,
+.modal select option { background: var(--tone-2); color: var(--tone-on); }
+
+/* 数値入力の増減矢印を消して見た目を揃える */
+.form-group input[type="number"] { -moz-appearance: textfield; }
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ドロップダウンの矢印を明るい色に描き直す */
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa0aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* フォーカス: 緑ではなく、明るい枠＋やわらかいリングで示す */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.sync-input:focus,
+#newTask:focus {
+  outline: none;
+  border-color: #7d8595;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+}
+
+/* 数量の＋−はモノトーンに */
+.quantity-control { border-color: var(--tone-4); background: var(--tone-3); }
+.qty-btn { color: var(--tone-on); }
+.qty-btn:active { background: rgba(255,255,255,.12); }
+
+/* --- 普段の画面から緑を外す --- */
+/* モード切替: 塗りつぶしをやめ、明るい面＋下線で現在地を示す */
+.mode-switch { background: var(--tone-2); border-bottom: 1px solid var(--tone-4); }
+.mode-btn {
+  background: transparent; color: var(--tone-sub);
+  border-radius: 0; border-bottom: 2px solid transparent; padding: 11px 8px;
+}
+.mode-btn--active {
+  background: transparent; color: var(--tone-on);
+  border-bottom-color: var(--tone-on); font-weight: 700;
+}
+.mode-badge { color: var(--tone-sub); }
+
+/* フィルタ: 選択中はグレーの面で示す */
+.todo-filter { border-color: var(--tone-4); color: var(--tone-sub); }
+.todo-filter--active {
+  background: var(--tone-4); border-color: var(--tone-4);
+  color: var(--tone-on); font-weight: 600;
+}
+
+/* 追加ボタン(FAB): 明るいグレーに濃い＋ */
+.fab { background: var(--tone-on); color: var(--tone-1); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+
+/* 下タブ: 選択中は白文字で示す */
+.nav-tab { color: var(--tone-sub); }
+.nav-tab--active { color: var(--tone-on); }
+.bottom-nav { background: var(--tone-2); border-top: 1px solid var(--tone-4); }
+
+/* カテゴリ選択チップ: 選択中はグレーの面 */
+.category-chip { background: var(--tone-3); color: var(--tone-sub); border: 1px solid var(--tone-4); }
+.category-chip--selected {
+  background: var(--tone-4); color: var(--tone-on);
+  border-color: #7d8595; font-weight: 600;
+}
+
+/* 主ボタン: 明るいグレー（決定操作。緑は状態表示に取っておく） */
+.btn--primary { background: var(--tone-on); color: var(--tone-1); }
+.btn--primary:active { background: #c9ccd1; }
+.sync-btn--primary { background: var(--tone-on); color: var(--tone-1); }
+.btn--secondary { background: var(--tone-3); color: var(--tone-on); border: 1px solid var(--tone-4); }
+.btn-url-fetch { background: var(--tone-3); color: var(--tone-on); border: 1px solid var(--tone-4); }
+
+/* 入力候補のヒントも控えめに */
+.suggest-hint { color: var(--tone-sub); }
+
+/* --- 状態を表す色だけ残す --- */
+.todo-check--done { background: #5bd49a; border-color: #5bd49a; }   /* 完了=緑 */
+.todo-check--doing { background: #f5c14b; border-color: #f5c14b; }  /* 進行中=黄 */
+.item-card__check--checked { background: #5bd49a; border-color: #5bd49a; }
+
+/* ドロップダウンの矢印が敷き詰められるのを防ぐ（background一括指定でrepeatが戻るため） */
+.form-group select,
+.modal select {
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-color: var(--tone-3);
+  padding-right: 36px;
+}
