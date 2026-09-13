@@ -4,8 +4,8 @@
   "description": "シンプルで使いやすい買い物リストアプリ",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F5F5F5",
-  "theme_color": "#4CAF50",
+  "background_color": "#1b1d21",
+  "theme_color": "#24272f",
   "orientation": "portrait",
   "lang": "ja",
   "icons": [
