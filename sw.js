@@ -1,12 +1,13 @@
 // Service Worker - Cache-first strategy
-const CACHE_NAME = 'shopping-list-v9';
+const CACHE_NAME = 'shopping-list-v10';
 const ASSETS = [
   './',
   './index.html',
-  './css/style.css',
-  './js/app.js',
-  './js/sync.js',
-  './js/store.js',
+  './css/style.css?v=10',
+  './js/app.js?v=10',
+  './js/sync.js?v=10',
+  './js/todo.js?v=10',
+  './js/store.js?v=10',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -35,7 +36,7 @@ self.addEventListener('activate', event => {
 // Fetch: cache-first
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    caches.match(event.request, { ignoreSearch: true })
       .then(cached => cached || fetch(event.request))
   );
 });

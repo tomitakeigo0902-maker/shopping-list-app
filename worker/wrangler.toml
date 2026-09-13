@@ -4,8 +4,8 @@ compatibility_date = "2026-01-01"
 
 [vars]
 # デプロイ後に自分の値へ書き換える
-DATABASE_ID = "PUT_DATABASE_ID_HERE"
-ALLOW_ORIGIN = "https://tomitakeigo0902-maker.github.io"
+DATABASE_ID = "ca3b821d-6f3a-406c-89ca-d94d74fc06dd"
+ALLOW_ORIGIN = "*"
 
 # NOTION_TOKEN と APP_KEY はシークレット（ここには書かない）:
 #   npx wrangler secret put NOTION_TOKEN

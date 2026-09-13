@@ -17,16 +17,28 @@ const NOTION_API = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 
 // Notion プロパティ名（create-notion-db.js と一致させること）
+// 買い物の行で使うプロパティ名（📋 TODO と同じDB内。カテゴリ=買い物 で区別する）
 const P = {
-  name: '商品名',
-  category: 'カテゴリ',
+  name: 'タスク',
+  category: '買い物カテゴリ',
   quantity: '数量',
   unit: '単位',
   memo: 'メモ',
   price: '価格',
   url: 'URL',
-  purchased: '購入済み',
 };
+const SHOPPING_TAG = '買い物'; // カテゴリ列がこの値の行＝買い物
+
+// 📋 TODO DBのプロパティ名
+const T = {
+  title: 'タスク',
+  status: 'ステータス',
+  category: 'カテゴリ',
+  priority: '優先度',
+  due: '期限',
+  memo: 'メモ',
+};
+const STATUS = { todo: '未着手', doing: '進行中', done: '完了' };
 
 export default {
   async fetch(request, env) {
@@ -47,6 +59,25 @@ export default {
     const parts = url.pathname.split('/').filter(Boolean); // ["items"] or ["items", "<id>"]
 
     try {
+      // --- TODO（📋 TODO データベース）---
+      if (parts[0] === 'todos') {
+        if (request.method === 'GET' && parts.length === 1) {
+          return json({ todos: await listTodos(env) }, 200, cors);
+        }
+        if (request.method === 'POST' && parts.length === 1) {
+          return json({ todo: await createTodo(env, await request.json()) }, 200, cors);
+        }
+        if (request.method === 'PATCH' && parts.length === 2) {
+          return json({ todo: await updateTodo(env, parts[1], await request.json()) }, 200, cors);
+        }
+        if (request.method === 'DELETE' && parts.length === 2) {
+          await notion(env, 'PATCH', `/pages/${parts[1]}`, { archived: true });
+          return json({ ok: true }, 200, cors);
+        }
+        return json({ error: 'method not allowed' }, 405, cors);
+      }
+
+      // --- 買い物（🛒 買い物 データベース）---
       if (parts[0] !== 'items') return json({ error: 'not found' }, 404, cors);
 
       if (request.method === 'GET' && parts.length === 1) {
@@ -109,7 +140,12 @@ async function listItems(env) {
   do {
     const body = {
       page_size: 100,
-      filter: { property: P.purchased, checkbox: { equals: false } },
+      filter: {
+        and: [
+          { property: T.category, select: { equals: SHOPPING_TAG } },
+          { property: T.status, select: { does_not_equal: STATUS.done } },
+        ],
+      },
     };
     if (cursor) body.start_cursor = cursor;
     const d = await notion(env, 'POST', `/databases/${env.DATABASE_ID}/query`, body);
@@ -132,7 +168,7 @@ function parsePage(page) {
     memo: text(p[P.memo] && p[P.memo].rich_text),
     price: (p[P.price] && p[P.price].number) ?? '',
     url: (p[P.url] && p[P.url].url) || '',
-    purchased: !!(p[P.purchased] && p[P.purchased].checkbox),
+    purchased: (p[T.status] && p[T.status].select ? p[T.status].select.name : '') === STATUS.done,
     createdAt: Date.parse(page.created_time) || Date.now(),
   };
 }
@@ -146,14 +182,18 @@ function buildProps(b) {
   if (b.memo !== undefined) props[P.memo] = { rich_text: [{ text: { content: b.memo || '' } }] };
   if (b.price !== undefined) props[P.price] = { number: b.price === '' || b.price === null ? null : Number(b.price) };
   if (b.url !== undefined) props[P.url] = { url: b.url || null };
-  if (b.purchased !== undefined) props[P.purchased] = { checkbox: !!b.purchased };
+  if (b.purchased !== undefined) {
+    props[T.status] = { select: { name: b.purchased ? STATUS.done : STATUS.todo } };
+  }
   return props;
 }
 
 async function createItem(env, b) {
+  const properties = buildProps({ purchased: false, ...b });
+  properties[T.category] = { select: { name: SHOPPING_TAG } }; // 買い物として登録
   const page = await notion(env, 'POST', '/pages', {
     parent: { database_id: env.DATABASE_ID },
-    properties: buildProps({ purchased: false, ...b }),
+    properties,
   });
   return parsePage(page);
 }
@@ -161,4 +201,66 @@ async function createItem(env, b) {
 async function updateItem(env, id, b) {
   const page = await notion(env, 'PATCH', `/pages/${id}`, { properties: buildProps(b) });
   return parsePage(page);
+}
+
+
+// ===== TODO（📋 TODO データベース）=====
+
+async function listTodos(env) {
+  let results = [];
+  let cursor;
+  do {
+    const body = {
+      page_size: 100,
+      filter: { property: T.category, select: { does_not_equal: SHOPPING_TAG } },
+    };
+    if (cursor) body.start_cursor = cursor;
+    const d = await notion(env, 'POST', `/databases/${env.DATABASE_ID}/query`, body);
+    results = results.concat(d.results || []);
+    cursor = d.has_more ? d.next_cursor : null;
+  } while (cursor);
+  return results.map(parseTodo);
+}
+
+function parseTodo(page) {
+  const p = page.properties || {};
+  const text = (arr) => (arr || []).map((t) => t.plain_text || (t.text && t.text.content) || '').join('');
+  const sel = (k) => (p[k] && p[k].select ? p[k].select.name : null);
+  const status = sel(T.status) || STATUS.todo;
+  return {
+    id: page.id,
+    title: text(p[T.title] && p[T.title].title) || '(無題)',
+    status,
+    done: status === STATUS.done,
+    category: sel(T.category),
+    priority: sel(T.priority),
+    due: p[T.due] && p[T.due].date ? p[T.due].date.start : null,
+    memo: text(p[T.memo] && p[T.memo].rich_text),
+    createdAt: Date.parse(page.created_time) || Date.now(),
+    lastEdited: page.last_edited_time,
+  };
+}
+
+function buildTodoProps(b) {
+  const props = {};
+  if (b.title !== undefined) props[T.title] = { title: [{ text: { content: b.title } }] };
+  if (b.status !== undefined) props[T.status] = { select: { name: b.status } };
+  if (b.category !== undefined) props[T.category] = b.category ? { select: { name: b.category } } : { select: null };
+  if (b.priority !== undefined) props[T.priority] = b.priority ? { select: { name: b.priority } } : { select: null };
+  if (b.due !== undefined) props[T.due] = b.due ? { date: { start: b.due } } : { date: null };
+  if (b.memo !== undefined) props[T.memo] = { rich_text: [{ text: { content: b.memo || '' } }] };
+  return props;
+}
+
+async function createTodo(env, b) {
+  const page = await notion(env, 'POST', '/pages', {
+    parent: { database_id: env.DATABASE_ID },
+    properties: buildTodoProps({ status: STATUS.todo, ...b }),
+  });
+  return parseTodo(page);
+}
+
+async function updateTodo(env, id, b) {
+  const page = await notion(env, 'PATCH', `/pages/${id}`, { properties: buildTodoProps(b) });
+  return parseTodo(page);
 }

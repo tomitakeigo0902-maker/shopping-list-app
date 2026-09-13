@@ -1019,3 +1019,63 @@ button {
 }
 .sync-btn--primary { background: #4CAF50; color: #fff; }
 .sync-btn--ghost { background: #f0f0f0; color: #555; }
+
+/* === モード切替（やること / 買い物）=== */
+.mode-switch {
+  display: flex; gap: 8px; padding: 10px 12px;
+  background: #fff; border-bottom: 1px solid #e8e8e8;
+  position: sticky; top: 0; z-index: 10;
+}
+.mode-btn {
+  flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer;
+  background: #f2f2f2; color: #777; font-size: 15px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mode-btn--active { background: #4CAF50; color: #fff; }
+.mode-badge { font-size: 11px; font-weight: 500; opacity: .9; }
+
+/* === やること === */
+.todo-filters { display: flex; gap: 6px; padding: 10px 12px 4px; }
+.todo-filter {
+  background: transparent; border: 1px solid #ddd; color: #888;
+  border-radius: 999px; padding: 5px 14px; font-size: 12px; cursor: pointer;
+}
+.todo-filter--active { background: #4CAF50; border-color: #4CAF50; color: #fff; font-weight: 600; }
+
+.todo-list { padding: 8px 12px 90px; }
+.todo-card {
+  background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.todo-card--done { opacity: .55; }
+.todo-card--doing { box-shadow: inset 3px 0 0 #FFB300, 0 1px 3px rgba(0,0,0,.08); }
+.todo-card__row { display: flex; align-items: flex-start; gap: 12px; }
+.todo-check {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px;
+  border: 2px solid #bbb; background: #fff; cursor: pointer;
+  font-size: 13px; line-height: 1; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.todo-check--doing { background: #FFB300; border-color: #FFB300; color: #4a3500; }
+.todo-check--done { background: #4CAF50; border-color: #4CAF50; }
+.todo-card__body { flex: 1 1 auto; min-width: 0; }
+.todo-card__title { font-size: 15px; line-height: 1.5; word-break: break-word; }
+.todo-card--done .todo-card__title { text-decoration: line-through; color: #999; }
+.todo-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; align-items: center; }
+.todo-tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  background: #f0f0f0; color: #777; white-space: nowrap;
+}
+.todo-tag--doing { background: #FFF3E0; color: #E67E00; }
+.todo-tag--pri-高 { background: #FFEBEE; color: #E53935; }
+.todo-tag--over { background: #FFEBEE; color: #E53935; }
+.todo-tag--memo { cursor: pointer; }
+.todo-memo {
+  margin-top: 10px; padding: 10px 12px; background: #FAFAFA; border-radius: 8px;
+  font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: #555;
+}
+
+/* ヘッダーが position:fixed のため、その下に配置する */
+.mode-switch { margin-top: 56px; top: 56px; }
+/* モード切替がヘッダー分の余白を担うので、各ビューの上余白は小さくする */
+.view { padding-top: 8px; }

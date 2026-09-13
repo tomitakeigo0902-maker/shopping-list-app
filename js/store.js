@@ -406,3 +406,6 @@ const Store = (() => {
 
   return { items, history, favorites, getCategoryInfo, suggest, CATEGORIES, UNITS };
 })();
+
+// 他のスクリプトから window.Store で参照できるようにする
+window.Store = Store;

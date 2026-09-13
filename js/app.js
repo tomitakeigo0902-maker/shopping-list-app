@@ -782,6 +782,30 @@ const App = (() => {
   }
 
   // === Init ===
+  // === モード切替（やること / 買い物）===
+  let currentMode = 'todo';
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b =>
+      b.classList.toggle('mode-btn--active', b.dataset.mode === mode));
+
+    const isShop = mode === 'shop';
+    // 買い物モードのときだけ、買い物用の画面と操作を見せる
+    document.getElementById('viewTodo').classList.toggle('view--active', !isShop);
+    document.getElementById('bottomNav').style.display = isShop ? '' : 'none';
+    document.getElementById('fabAdd').style.display = isShop ? '' : 'none';
+    ['viewList', 'viewHistory', 'viewFavorites'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !isShop) el.classList.remove('view--active');
+    });
+    const ttl = document.querySelector('.header__title');
+    if (ttl) ttl.textContent = isShop ? '🛒 買い物リスト' : '✅ やること';
+    if (isShop) switchView('list');
+    else if (window.Todo) { Todo.render(); Todo.refresh(); }
+    try { localStorage.setItem('sl_mode', mode); } catch {}
+  }
+
   // === Notion同期 ===
   function queueSync(op) {
     if (!window.Sync || !Sync.isConfigured()) return;
@@ -807,6 +831,7 @@ const App = (() => {
         Store.items.mergeFromNotion(remote, Sync.pendingLocalIds());
         renderList();
       }
+      if (window.Todo) await Todo.refresh();
       setSyncStatus('ok');
     } catch (e) {
       setSyncStatus('error');
@@ -861,6 +886,16 @@ const App = (() => {
 
     // Initial render
     renderList();
+
+    // モード切替
+    document.getElementById('modeSwitch').addEventListener('click', e => {
+      const b = e.target.closest('.mode-btn');
+      if (b) switchMode(b.dataset.mode);
+    });
+    if (window.Todo) { Todo.load(); Todo.bind(); }
+    let savedMode = 'todo';
+    try { savedMode = localStorage.getItem('sl_mode') || 'todo'; } catch {}
+    switchMode(savedMode);
 
     // Notion同期を開始
     initSync();

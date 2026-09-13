@@ -91,6 +91,12 @@ const Sync = (() => {
     } else if (op.type === 'update') {
       const nid = op.notionId || notionIdOf(op.localId);
       if (nid) await api('PATCH', '/items/' + nid, op.payload);
+    } else if (op.type === 'todo-update') {
+      await api('PATCH', '/todos/' + op.id, op.payload);
+    } else if (op.type === 'todo-create') {
+      await api('POST', '/todos', op.payload);
+    } else if (op.type === 'todo-delete') {
+      await api('DELETE', '/todos/' + op.id);
     } else if (op.type === 'delete') {
       const nid = op.notionId || notionIdOf(op.localId);
       if (nid) await api('DELETE', '/items/' + nid);
@@ -112,9 +118,30 @@ const Sync = (() => {
     return await pull();
   }
 
+  // ===== TODO =====
+  async function pullTodos() {
+    const d = await api('GET', '/todos');
+    return d.todos || [];
+  }
+  async function updateTodo(id, patch) {
+    const d = await api('PATCH', '/todos/' + id, patch);
+    return d.todo;
+  }
+  async function createTodo(payload) {
+    const d = await api('POST', '/todos', payload);
+    return d.todo;
+  }
+  async function deleteTodo(id) {
+    return api('DELETE', '/todos/' + id);
+  }
+
   return {
     isConfigured, getConf, setConf, test,
+    pullTodos, updateTodo, createTodo, deleteTodo,
     enqueue, flush, pull, syncNow, pendingLocalIds,
     setLink, notionIdOf,
   };
 })();
+
+// 他のスクリプトから window.Sync で参照できるようにする
+window.Sync = Sync;
