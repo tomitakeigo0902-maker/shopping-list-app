@@ -6,16 +6,19 @@
 }
 
 :root {
-  --color-primary: #4CAF50;
-  --color-primary-dark: #388E3C;
-  --color-primary-light: #C8E6C9;
-  --color-background: #F5F5F5;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #212121;
-  --color-text-secondary: #757575;
-  --color-divider: #E0E0E0;
-  --color-danger: #F44336;
-  --color-checked: #9E9E9E;
+  --color-primary: #5bd49a;
+  --color-primary-dark: #43b881;
+  --color-primary-light: #2a3b35;
+  --color-background: #1b1d21;
+  --color-surface: #24272f;
+  --color-surface-2: #2a2e38;
+  --color-text-primary: #e8eaed;
+  --color-text-secondary: #9aa0aa;
+  --color-divider: #353a45;
+  --color-danger: #ff7b7b;
+  --color-checked: #6b7280;
+  --color-accent: #6ea8fe;
+  --color-warn: #f5c14b;
 
   --header-height: 56px;
   --nav-height: 60px;
@@ -30,9 +33,9 @@
   --sp-lg: 24px;
 
   --font: -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-2: 0 4px 12px rgba(0,0,0,0.12);
-  --shadow-3: 0 8px 24px rgba(0,0,0,0.16);
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-2: 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-3: 0 8px 24px rgba(0,0,0,0.5);
 
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -72,8 +75,9 @@ button {
   left: 0;
   right: 0;
   height: var(--header-height);
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-divider);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -88,7 +92,7 @@ button {
 }
 
 .header__action {
-  color: #fff;
+  color: var(--color-text-secondary);
   width: var(--tap-min);
   height: var(--tap-min);
   display: flex;
@@ -244,7 +248,7 @@ button {
   content: '';
   width: 6px;
   height: 10px;
-  border: solid #fff;
+  border: solid #11151c;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) translate(-1px, -1px);
 }
@@ -337,7 +341,7 @@ button {
 }
 
 .history-item__content:active {
-  background: #f0f0f0;
+  background: rgba(255,255,255,.07);
 }
 
 .history-item__info {
@@ -359,7 +363,7 @@ button {
 
 .history-item__price {
   flex-shrink: 0;
-  background: #FFF3E0;
+  background: rgba(245,193,75,.16);
   color: #E65100;
   font-size: 0.8rem;
   font-weight: 600;
@@ -396,7 +400,7 @@ button {
 }
 
 .favorite-card:active {
-  background: #f0f0f0;
+  background: rgba(255,255,255,.07);
 }
 
 .favorite-card__icon {
@@ -509,7 +513,7 @@ button {
   width: var(--fab-size);
   height: var(--fab-size);
   background: var(--color-primary);
-  color: #fff;
+  color: #11151c;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -816,7 +820,7 @@ button {
 /* === Price badge in list === */
 .item-card__price {
   flex-shrink: 0;
-  background: #FFF3E0;
+  background: rgba(245,193,75,.16);
   color: #E65100;
   font-size: 0.8rem;
   font-weight: 600;
@@ -847,7 +851,8 @@ button {
 
 .btn--primary {
   background: var(--color-primary);
-  color: #fff;
+  color: #11151c;
+  font-weight: 700;
 }
 
 .btn--primary:active {
@@ -855,17 +860,18 @@ button {
 }
 
 .btn--secondary {
-  background: #f0f0f0;
+  background: rgba(255,255,255,.07);
   color: var(--color-text-primary);
 }
 
 .btn--secondary:active {
-  background: #e0e0e0;
+  background: rgba(255,255,255,.14);
 }
 
 .btn--danger {
   background: var(--color-danger);
-  color: #fff;
+  color: #11151c;
+  font-weight: 700;
 }
 
 .btn--danger:active {
@@ -878,8 +884,9 @@ button {
   bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--sp-lg));
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #323232;
-  color: #fff;
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
   padding: 10px 20px;
   border-radius: 24px;
   font-size: 0.9rem;
@@ -1004,75 +1011,75 @@ button {
 }
 .sync-status--error { color: #FFCDD2; }
 
-.sync-help { font-size: 13px; line-height: 1.6; color: #666; margin-bottom: 14px; }
-.sync-label { display: block; font-size: 12px; color: #666; margin: 10px 0 4px; }
+.sync-help { font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); margin-bottom: 14px; }
+.sync-label { display: block; font-size: 12px; color: var(--color-text-secondary); margin: 10px 0 4px; }
 .sync-input {
-  width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
-  font-size: 15px; background: #fff; box-sizing: border-box;
+  width: 100%; padding: 11px 12px; border: 1px solid var(--color-divider); border-radius: 10px;
+  font-size: 15px; background: var(--color-surface); box-sizing: border-box;
 }
-.sync-input:focus { outline: none; border-color: #4CAF50; }
-.sync-msg { font-size: 13px; margin: 12px 0 0; min-height: 18px; color: #444; }
+.sync-input:focus { outline: none; border-color: var(--color-primary); }
+.sync-msg { font-size: 13px; margin: 12px 0 0; min-height: 18px; color: var(--color-text-primary); }
 .sync-actions { display: flex; gap: 10px; margin-top: 16px; }
 .sync-btn {
   flex: 1; padding: 13px; border-radius: 10px; font-size: 15px;
   font-weight: 600; cursor: pointer; border: none;
 }
-.sync-btn--primary { background: #4CAF50; color: #fff; }
-.sync-btn--ghost { background: #f0f0f0; color: #555; }
+.sync-btn--primary { background: var(--color-primary); color: #11151c; font-weight: 700; }
+.sync-btn--ghost { background: rgba(255,255,255,.07); color: var(--color-text-secondary); }
 
 /* === モード切替（やること / 買い物）=== */
 .mode-switch {
   display: flex; gap: 8px; padding: 10px 12px;
-  background: #fff; border-bottom: 1px solid #e8e8e8;
+  background: var(--color-surface); border-bottom: 1px solid var(--color-divider);
   position: sticky; top: 0; z-index: 10;
 }
 .mode-btn {
   flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer;
-  background: #f2f2f2; color: #777; font-size: 15px; font-weight: 600;
+  background: rgba(255,255,255,.07); color: var(--color-text-secondary); font-size: 15px; font-weight: 600;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
-.mode-btn--active { background: #4CAF50; color: #fff; }
+.mode-btn--active { background: var(--color-primary); color: #11151c; }
 .mode-badge { font-size: 11px; font-weight: 500; opacity: .9; }
 
 /* === やること === */
 .todo-filters { display: flex; gap: 6px; padding: 10px 12px 4px; }
 .todo-filter {
-  background: transparent; border: 1px solid #ddd; color: #888;
+  background: transparent; border: 1px solid var(--color-divider); color: var(--color-text-secondary);
   border-radius: 999px; padding: 5px 14px; font-size: 12px; cursor: pointer;
 }
-.todo-filter--active { background: #4CAF50; border-color: #4CAF50; color: #fff; font-weight: 600; }
+.todo-filter--active { background: var(--color-primary); border-color: var(--color-primary); color: #11151c; font-weight: 600; }
 
 .todo-list { padding: 8px 12px 90px; }
 .todo-card {
-  background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  background: var(--color-surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
 .todo-card--done { opacity: .55; }
-.todo-card--doing { box-shadow: inset 3px 0 0 #FFB300, 0 1px 3px rgba(0,0,0,.08); }
+.todo-card--doing { box-shadow: inset 3px 0 0 var(--color-warn), 0 1px 3px rgba(0,0,0,.08); }
 .todo-card__row { display: flex; align-items: flex-start; gap: 12px; }
 .todo-check {
   flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px;
-  border: 2px solid #bbb; background: #fff; cursor: pointer;
-  font-size: 13px; line-height: 1; color: #fff;
+  border: 2px solid var(--color-checked); background: var(--color-surface); cursor: pointer;
+  font-size: 13px; line-height: 1; color: #11151c;
   display: flex; align-items: center; justify-content: center;
 }
-.todo-check--doing { background: #FFB300; border-color: #FFB300; color: #4a3500; }
-.todo-check--done { background: #4CAF50; border-color: #4CAF50; }
+.todo-check--doing { background: var(--color-warn); border-color: var(--color-warn); color: #4a3500; }
+.todo-check--done { background: var(--color-primary); border-color: var(--color-primary); }
 .todo-card__body { flex: 1 1 auto; min-width: 0; }
 .todo-card__title { font-size: 15px; line-height: 1.5; word-break: break-word; }
-.todo-card--done .todo-card__title { text-decoration: line-through; color: #999; }
+.todo-card--done .todo-card__title { text-decoration: line-through; color: var(--color-checked); }
 .todo-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; align-items: center; }
 .todo-tag {
   font-size: 11px; padding: 2px 8px; border-radius: 999px;
-  background: #f0f0f0; color: #777; white-space: nowrap;
+  background: rgba(255,255,255,.07); color: var(--color-text-secondary); white-space: nowrap;
 }
-.todo-tag--doing { background: #FFF3E0; color: #E67E00; }
-.todo-tag--pri-高 { background: #FFEBEE; color: #E53935; }
-.todo-tag--over { background: #FFEBEE; color: #E53935; }
+.todo-tag--doing { background: rgba(245,193,75,.16); color: var(--color-warn); }
+.todo-tag--pri-高 { background: rgba(255,123,123,.16); color: var(--color-danger); }
+.todo-tag--over { background: rgba(255,123,123,.16); color: var(--color-danger); }
 .todo-tag--memo { cursor: pointer; }
 .todo-memo {
-  margin-top: 10px; padding: 10px 12px; background: #FAFAFA; border-radius: 8px;
-  font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: #555;
+  margin-top: 10px; padding: 10px 12px; background: var(--color-surface-2); border-radius: 8px;
+  font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: var(--color-text-secondary);
 }
 
 /* ヘッダーが position:fixed のため、その下に配置する */

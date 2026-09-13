@@ -3,8 +3,8 @@
 //  - index.html（画面遷移）はネットワーク優先。更新を必ず受け取れるようにする。
 //    オフライン時だけキャッシュを使う。
 //  - ?v=N 付きのファイルはキャッシュ優先。更新時はURLが変わるので古いものは使われない。
-const CACHE_NAME = 'shopping-list-v12';
-const ASSET_VERSION = 'v=12';
+const CACHE_NAME = 'shopping-list-v13';
+const ASSET_VERSION = 'v=13';
 const ASSETS = [
   './',
   './index.html',
