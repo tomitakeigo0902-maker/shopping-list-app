@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>買い物リスト</title>
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -196,25 +196,23 @@
 
   <!-- 同期設定モーダル -->
   <div class="modal" id="syncModal">
-    <div class="modal__backdrop" data-close="sync"></div>
-    <div class="modal__sheet">
-      <h2 class="modal__title">Notion同期の設定</h2>
-      <p class="sync-help">パソコンで用意した中継サーバーのURLと合言葉を入れてください。1回設定すればこの端末で記憶されます。</p>
-      <label class="sync-label">中継サーバーのURL</label>
-      <input class="sync-input" id="syncUrl" type="url" placeholder="https://shopping-sync.xxxx.workers.dev" autocomplete="off">
-      <label class="sync-label">合言葉（APP_KEY）</label>
-      <input class="sync-input" id="syncKey" type="password" placeholder="合言葉" autocomplete="off">
-      <p class="sync-msg" id="syncMsg"></p>
-      <div class="sync-actions">
-        <button class="sync-btn sync-btn--ghost" id="syncCancel">閉じる</button>
-        <button class="sync-btn sync-btn--primary" id="syncSave">保存して接続</button>
-      </div>
+    <div class="modal__handle"></div>
+    <h2 class="modal__title">Notion同期の設定</h2>
+    <p class="sync-help">中継サーバーのURLと合言葉を入れてください。1回設定すればこの端末で記憶されます。</p>
+    <label class="sync-label">中継サーバーのURL</label>
+    <input class="sync-input" id="syncUrl" type="url" placeholder="https://xxxxx.workers.dev" autocomplete="off">
+    <label class="sync-label">合言葉</label>
+    <input class="sync-input" id="syncKey" type="password" placeholder="合言葉" autocomplete="off">
+    <p class="sync-msg" id="syncMsg"></p>
+    <div class="sync-actions">
+      <button type="button" class="sync-btn sync-btn--ghost" id="syncCancel">閉じる</button>
+      <button type="button" class="sync-btn sync-btn--primary" id="syncSave">保存して接続</button>
     </div>
   </div>
 
-  <script src="js/sync.js?v=10"></script>
-  <script src="js/todo.js?v=10"></script>
-  <script src="js/store.js?v=10"></script>
-  <script src="js/app.js?v=10"></script>
+  <script src="js/sync.js?v=12"></script>
+  <script src="js/todo.js?v=12"></script>
+  <script src="js/store.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
 </body>
 </html>

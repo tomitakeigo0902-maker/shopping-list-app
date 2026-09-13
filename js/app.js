@@ -856,11 +856,13 @@ const App = (() => {
     document.getElementById('syncUrl').value = conf.workerUrl || '';
     document.getElementById('syncKey').value = conf.appKey || '';
     document.getElementById('syncMsg').textContent = '';
-    document.getElementById('syncModal').classList.add('modal--open');
+    document.getElementById('syncModal').classList.add('modal--active');
+    document.getElementById('modalBackdrop').classList.add('modal-backdrop--active');
   }
 
   function closeSyncSettings() {
-    document.getElementById('syncModal').classList.remove('modal--open');
+    document.getElementById('syncModal').classList.remove('modal--active');
+    document.getElementById('modalBackdrop').classList.remove('modal-backdrop--active');
   }
 
   async function saveSyncSettings() {
