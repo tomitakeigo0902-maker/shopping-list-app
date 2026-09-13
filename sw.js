@@ -1,10 +1,11 @@
 // Service Worker - Cache-first strategy
-const CACHE_NAME = 'shopping-list-v8';
+const CACHE_NAME = 'shopping-list-v9';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
+  './js/sync.js',
   './js/store.js',
   './manifest.json',
   './icons/icon-192.png',

@@ -993,3 +993,29 @@ button {
     margin: 0 auto;
   }
 }
+
+/* === Notion同期 === */
+.sync-status {
+  margin-left: auto;
+  margin-right: 8px;
+  font-size: 11px;
+  color: rgba(255,255,255,.85);
+  white-space: nowrap;
+}
+.sync-status--error { color: #FFCDD2; }
+
+.sync-help { font-size: 13px; line-height: 1.6; color: #666; margin-bottom: 14px; }
+.sync-label { display: block; font-size: 12px; color: #666; margin: 10px 0 4px; }
+.sync-input {
+  width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
+  font-size: 15px; background: #fff; box-sizing: border-box;
+}
+.sync-input:focus { outline: none; border-color: #4CAF50; }
+.sync-msg { font-size: 13px; margin: 12px 0 0; min-height: 18px; color: #444; }
+.sync-actions { display: flex; gap: 10px; margin-top: 16px; }
+.sync-btn {
+  flex: 1; padding: 13px; border-radius: 10px; font-size: 15px;
+  font-weight: 600; cursor: pointer; border: none;
+}
+.sync-btn--primary { background: #4CAF50; color: #fff; }
+.sync-btn--ghost { background: #f0f0f0; color: #555; }

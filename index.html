@@ -17,6 +17,13 @@
   <!-- Header -->
   <header class="header" id="header">
     <h1 class="header__title">🛒 買い物リスト</h1>
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="header__action" id="syncSettingsBtn" aria-label="同期設定">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.14.36.4.66.73.87.33.2.71.31 1.1.31H21a2 2 0 0 1 0 4h-.09c-.39 0-.77.11-1.1.31-.33.21-.59.51-.73.87z"></path>
+      </svg>
+    </button>
     <button class="header__action" id="headerAction" aria-label="完了済みを削除" style="display:none;">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
@@ -166,6 +173,25 @@
     </div>
   </div>
 
+  <!-- 同期設定モーダル -->
+  <div class="modal" id="syncModal">
+    <div class="modal__backdrop" data-close="sync"></div>
+    <div class="modal__sheet">
+      <h2 class="modal__title">Notion同期の設定</h2>
+      <p class="sync-help">パソコンで用意した中継サーバーのURLと合言葉を入れてください。1回設定すればこの端末で記憶されます。</p>
+      <label class="sync-label">中継サーバーのURL</label>
+      <input class="sync-input" id="syncUrl" type="url" placeholder="https://shopping-sync.xxxx.workers.dev" autocomplete="off">
+      <label class="sync-label">合言葉（APP_KEY）</label>
+      <input class="sync-input" id="syncKey" type="password" placeholder="合言葉" autocomplete="off">
+      <p class="sync-msg" id="syncMsg"></p>
+      <div class="sync-actions">
+        <button class="sync-btn sync-btn--ghost" id="syncCancel">閉じる</button>
+        <button class="sync-btn sync-btn--primary" id="syncSave">保存して接続</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sync.js"></script>
   <script src="js/store.js"></script>
   <script src="js/app.js"></script>
 </body>

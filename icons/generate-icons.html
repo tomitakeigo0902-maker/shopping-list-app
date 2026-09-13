@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function drawIcon(canvas) {
+  const ctx = canvas.getContext('2d');
+  const s = canvas.width;
+
+  // Background
+  ctx.fillStyle = '#4CAF50';
+  ctx.fillRect(0, 0, s, s);
+
+  // Cart icon (simplified)
+  ctx.strokeStyle = '#fff';
+  ctx.fillStyle = '#fff';
+  ctx.lineWidth = s * 0.04;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const cx = s * 0.5;
+  const cy = s * 0.45;
+  const scale = s / 100;
+
+  // Cart body
+  ctx.beginPath();
+  ctx.moveTo(20 * scale, 30 * scale);
+  ctx.lineTo(28 * scale, 30 * scale);
+  ctx.lineTo(35 * scale, 55 * scale);
+  ctx.lineTo(72 * scale, 55 * scale);
+  ctx.lineTo(78 * scale, 35 * scale);
+  ctx.lineTo(32 * scale, 35 * scale);
+  ctx.stroke();
+
+  // Wheels
+  ctx.beginPath();
+  ctx.arc(40 * scale, 62 * scale, 4 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(65 * scale, 62 * scale, 4 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Checkmark
+  ctx.lineWidth = s * 0.05;
+  ctx.beginPath();
+  ctx.moveTo(42 * scale, 44 * scale);
+  ctx.lineTo(50 * scale, 51 * scale);
+  ctx.lineTo(65 * scale, 38 * scale);
+  ctx.stroke();
+
+  // Text
+  ctx.font = `bold ${s * 0.13}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('買い物', cx, s * 0.82);
+}
+
+drawIcon(document.getElementById('c192'));
+drawIcon(document.getElementById('c512'));
+
+// Download links
+['c192', 'c512'].forEach(id => {
+  const canvas = document.getElementById(id);
+  const link = document.createElement('a');
+  link.download = `icon-${canvas.width}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.textContent = `Download ${canvas.width}px`;
+  link.style.display = 'block';
+  link.style.margin = '10px';
+  document.body.appendChild(link);
+});
+</script>
+</body>
+</html>

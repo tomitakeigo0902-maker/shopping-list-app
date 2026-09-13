@@ -572,9 +572,11 @@ const App = (() => {
 
     if (editingItemId) {
       Store.items.update(editingItemId, data);
+      queueSync({ type: 'update', localId: editingItemId, payload: data });
       showToast('更新しました');
     } else {
-      Store.items.add(data);
+      const created = Store.items.add(data);
+      queueSync({ type: 'create', localId: created.id, payload: data });
       showToast(`${name} を追加しました`);
     }
 
@@ -669,6 +671,7 @@ const App = (() => {
 
     setTimeout(() => {
       const result = Store.items.complete(id);
+      queueSync({ type: 'purchase', localId: id });
       renderList();
       if (!result) return;
 
@@ -683,6 +686,7 @@ const App = (() => {
           label: '元に戻す',
           callback: () => {
             Store.items.restore(item, historyId);
+            queueSync({ type: 'update', localId: item.id, payload: { purchased: false } });
             renderList();
           }
         }
@@ -705,6 +709,7 @@ const App = (() => {
       if (item) openModal('edit', item);
     } else if (action === 'delete') {
       Store.items.remove(id);
+      queueSync({ type: 'delete', localId: id });
       showToast('削除しました');
       renderList();
     }
@@ -777,12 +782,96 @@ const App = (() => {
   }
 
   // === Init ===
+  // === Notion同期 ===
+  function queueSync(op) {
+    if (!window.Sync || !Sync.isConfigured()) return;
+    Sync.enqueue(op);
+    // すぐ送る（失敗しても待ち行列に残るのでオフラインでも安全）
+    Sync.flush().then(() => refreshFromNotion(false)).catch(() => {});
+  }
+
+  function setSyncStatus(state) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    const map = { syncing: '同期中…', ok: '', error: 'オフライン表示中' };
+    el.textContent = map[state] || '';
+    el.className = 'sync-status' + (state === 'error' ? ' sync-status--error' : '');
+  }
+
+  async function refreshFromNotion(notifyOnError) {
+    if (!window.Sync || !Sync.isConfigured()) return;
+    try {
+      setSyncStatus('syncing');
+      const remote = await Sync.syncNow();
+      if (remote) {
+        Store.items.mergeFromNotion(remote, Sync.pendingLocalIds());
+        renderList();
+      }
+      setSyncStatus('ok');
+    } catch (e) {
+      setSyncStatus('error');
+      if (notifyOnError) showToast('同期できませんでした（オフライン表示中）');
+    }
+  }
+
+  function initSync() {
+    if (!window.Sync || !Sync.isConfigured()) return;
+    refreshFromNotion(false);
+    // 画面に戻ったとき・通信が復活したとき・1分ごとに同期
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshFromNotion(false);
+    });
+    window.addEventListener('online', () => refreshFromNotion(false));
+    setInterval(() => { if (!document.hidden) refreshFromNotion(false); }, 60000);
+  }
+
+  // === 同期設定画面 ===
+  function openSyncSettings() {
+    const conf = (window.Sync && Sync.getConf()) || { workerUrl: '', appKey: '' };
+    document.getElementById('syncUrl').value = conf.workerUrl || '';
+    document.getElementById('syncKey').value = conf.appKey || '';
+    document.getElementById('syncMsg').textContent = '';
+    document.getElementById('syncModal').classList.add('modal--open');
+  }
+
+  function closeSyncSettings() {
+    document.getElementById('syncModal').classList.remove('modal--open');
+  }
+
+  async function saveSyncSettings() {
+    const workerUrl = document.getElementById('syncUrl').value.trim();
+    const appKey = document.getElementById('syncKey').value.trim();
+    const msg = document.getElementById('syncMsg');
+    if (!workerUrl || !appKey) { msg.textContent = '両方入力してください'; return; }
+    msg.textContent = '接続を確認中…';
+    try {
+      const count = await Sync.test(workerUrl, appKey);
+      Sync.setConf({ workerUrl, appKey });
+      msg.textContent = `つながりました！（${count}件）`;
+      await refreshFromNotion(true);
+      setTimeout(closeSyncSettings, 800);
+    } catch (e) {
+      msg.textContent = '失敗: ' + e.message;
+    }
+  }
+
   function init() {
     // Render unit options
     renderUnitOptions();
 
     // Initial render
     renderList();
+
+    // Notion同期を開始
+    initSync();
+
+    // 同期設定
+    const sb = document.getElementById('syncSettingsBtn');
+    if (sb) sb.addEventListener('click', openSyncSettings);
+    const sc = document.getElementById('syncCancel');
+    if (sc) sc.addEventListener('click', closeSyncSettings);
+    const ss = document.getElementById('syncSave');
+    if (ss) ss.addEventListener('click', saveSyncSettings);
 
     // Bottom nav
     document.getElementById('bottomNav').addEventListener('click', e => {

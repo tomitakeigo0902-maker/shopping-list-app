@@ -295,6 +295,28 @@ const Store = (() => {
         _write(KEYS.items, all);
       }
       if (historyId) history.removeById(historyId);
+    },
+    // Notionから取得した一覧でローカルを置き換える。
+    // keepIds: まだNotionへ送れていないローカル追加分は消さずに残す
+    mergeFromNotion(remote, keepIds) {
+      const local = _read(KEYS.items, []);
+      const keep = local.filter(i => (keepIds || []).includes(i.id));
+      const merged = remote.map((r, idx) => ({
+        id: r.id,
+        name: r.name,
+        category: r.category || 'その他',
+        quantity: r.quantity || 1,
+        unit: r.unit || '個',
+        memo: r.memo || '',
+        price: r.price === null || r.price === undefined ? '' : r.price,
+        url: r.url || '',
+        checked: false,
+        createdAt: r.createdAt || Date.now(),
+        sortOrder: idx,
+        fromNotion: true
+      })).concat(keep);
+      _write(KEYS.items, merged);
+      return merged;
     }
   };
 

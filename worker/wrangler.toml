@@ -1,0 +1,12 @@
+name = "shopping-sync"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+# デプロイ後に自分の値へ書き換える
+DATABASE_ID = "PUT_DATABASE_ID_HERE"
+ALLOW_ORIGIN = "https://tomitakeigo0902-maker.github.io"
+
+# NOTION_TOKEN と APP_KEY はシークレット（ここには書かない）:
+#   npx wrangler secret put NOTION_TOKEN
+#   npx wrangler secret put APP_KEY
