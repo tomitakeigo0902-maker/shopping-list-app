@@ -1231,3 +1231,65 @@ button {
 .is-desktop .mode-switch { margin-top: 86px; top: 86px; }
 .is-desktop .modal { z-index: 320; }
 .is-desktop .modal-backdrop { z-index: 310; }
+
+/* ==========================================================================
+   サイズ調整とスクロールバー非表示
+   ========================================================================== */
+
+/* --- スクロールバーを消す（スクロール自体はできる） --- */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none; }
+
+/* --- 全体を少し小さめに --- */
+html { font-size: 14px; }
+.todo-card__title { font-size: 14px; }
+.todo-card { padding: 10px 12px; margin-bottom: 6px; }
+.todo-check { width: 24px; height: 24px; }
+.mode-btn { font-size: 14px; }
+
+/* --- PCウィジェット（幅320px）はさらにコンパクトに --- */
+html.is-desktop {
+  font-size: 12px;
+  --header-height: 40px;
+  --nav-height: 46px;
+  --fab-size: 42px;
+  --tap-min: 36px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --radius: 10px;
+  --desk-bar-h: 26px;
+}
+.is-desktop .desk-bar { height: var(--desk-bar-h); padding: 0 4px 0 8px; }
+.is-desktop .desk-title { font-size: 10px; }
+.is-desktop .desk-btn { width: 22px; height: 19px; font-size: 10px; }
+
+/* 操作バー＋ヘッダーの分だけ下げる（数値は上の変数と連動） */
+.is-desktop .header { top: var(--desk-bar-h); }
+.is-desktop .header__title { font-size: 1rem; }
+.is-desktop .mode-switch {
+  margin-top: calc(var(--desk-bar-h) + var(--header-height));
+  top: calc(var(--desk-bar-h) + var(--header-height));
+  padding: 6px 8px;
+}
+.is-desktop .mode-btn { font-size: 12px; padding: 7px 4px; }
+.is-desktop .mode-badge { font-size: 10px; }
+
+.is-desktop .todo-filters { padding: 7px 8px 2px; gap: 5px; }
+.is-desktop .todo-filter { font-size: 10.5px; padding: 3px 10px; }
+.is-desktop .todo-list { padding: 6px 8px 70px; }
+.is-desktop .todo-card { padding: 8px 10px; margin-bottom: 5px; border-radius: 9px; }
+.is-desktop .todo-card__row { gap: 9px; }
+.is-desktop .todo-check { width: 20px; height: 20px; border-radius: 6px; font-size: 11px; }
+.is-desktop .todo-card__title { font-size: 12.5px; line-height: 1.45; }
+.is-desktop .todo-card__tags { gap: 4px; margin-top: 5px; }
+.is-desktop .todo-tag { font-size: 9.5px; padding: 1px 6px; }
+.is-desktop .todo-memo { font-size: 11px; padding: 8px 10px; margin-top: 8px; }
+
+/* 買い物側もあわせて詰める */
+.is-desktop .item-list { padding: 6px 8px 70px; }
+.is-desktop .category-group__header { font-size: 10.5px; }
+.is-desktop .item-card { padding: 8px 10px; margin-bottom: 5px; }
+.is-desktop .item-card__name { font-size: 12.5px; }
+.is-desktop .item-card__meta { font-size: 10.5px; }
+.is-desktop .nav-tab { font-size: 9.5px; }
+.is-desktop .fab { right: 12px; }

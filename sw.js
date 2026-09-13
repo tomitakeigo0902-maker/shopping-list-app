@@ -3,8 +3,8 @@
 //  - index.html（画面遷移）はネットワーク優先。更新を必ず受け取れるようにする。
 //    オフライン時だけキャッシュを使う。
 //  - ?v=N 付きのファイルはキャッシュ優先。更新時はURLが変わるので古いものは使われない。
-const CACHE_NAME = 'shopping-list-v19';
-const ASSET_VERSION = 'v=19';
+const CACHE_NAME = 'shopping-list-v20';
+const ASSET_VERSION = 'v=20';
 const ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,7 @@ const ASSETS = [
   './js/todo.js?' + ASSET_VERSION,
   './js/store.js?' + ASSET_VERSION,
   './js/app.js?' + ASSET_VERSION,
-  './manifest.json?v=19',
+  './manifest.json?v=20',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
