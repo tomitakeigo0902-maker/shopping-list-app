@@ -6,8 +6,8 @@ compatibility_date = "2026-01-01"
 # デプロイ後に自分の値へ書き換える
 DATABASE_ID = "ca3b821d-6f3a-406c-89ca-d94d74fc06dd"
 ALLOW_ORIGIN = "*"
-# 💴 価格記録DB（未作成の間は空。空なら /prices は空の一覧を返す）
-PRICE_DATABASE_ID = ""
+# 💴 価格記録DB
+PRICE_DATABASE_ID = "3e5b6659-5012-816b-8fc1-f28690654db3"
 
 # NOTION_TOKEN と APP_KEY はシークレット（ここには書かない）:
 #   npx wrangler secret put NOTION_TOKEN
