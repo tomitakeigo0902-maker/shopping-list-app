@@ -118,6 +118,12 @@ const Sync = (() => {
     return await pull();
   }
 
+  // ===== 価格記録 =====
+  async function pullPrices() {
+    const d = await api('GET', '/prices');
+    return d.prices || [];
+  }
+
   // ===== TODO =====
   async function pullTodos() {
     const d = await api('GET', '/todos');
@@ -137,7 +143,7 @@ const Sync = (() => {
 
   return {
     isConfigured, getConf, setConf, test,
-    pullTodos, updateTodo, createTodo, deleteTodo,
+    pullTodos, updateTodo, createTodo, deleteTodo, pullPrices,
     enqueue, flush, pull, syncNow, pendingLocalIds,
     setLink, notionIdOf,
   };

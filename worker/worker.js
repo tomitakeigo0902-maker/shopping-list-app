@@ -59,6 +59,19 @@ export default {
     const parts = url.pathname.split('/').filter(Boolean); // ["items"] or ["items", "<id>"]
 
     try {
+      // --- 価格記録（💴 価格記録 データベース）---
+      if (parts[0] === 'prices') {
+        if (!env.PRICE_DATABASE_ID) return json({ prices: [] }, 200, cors);
+        if (request.method === 'GET' && parts.length === 1) {
+          return json({ prices: await listPrices(env) }, 200, cors);
+        }
+        if (request.method === 'DELETE' && parts.length === 2) {
+          await notion(env, 'PATCH', `/pages/${parts[1]}`, { archived: true });
+          return json({ ok: true }, 200, cors);
+        }
+        return json({ error: 'method not allowed' }, 405, cors);
+      }
+
       // --- TODO（📋 TODO データベース）---
       if (parts[0] === 'todos') {
         if (request.method === 'GET' && parts.length === 1) {
@@ -263,4 +276,57 @@ async function createTodo(env, b) {
 async function updateTodo(env, id, b) {
   const page = await notion(env, 'PATCH', `/pages/${id}`, { properties: buildTodoProps(b) });
   return parseTodo(page);
+}
+
+
+// ===== 価格記録（💴 価格記録 データベース）=====
+// 書き込みは claude.ai が Notion に直接行う。ここは読み取り（と誤記録の削除）だけ。
+const PR = {
+  name: '商品名',
+  price: '価格',
+  store: 'スーパー',
+  date: '日付',
+  sale: '特売',
+  category: '買い物カテゴリ',
+  memo: 'メモ',
+};
+
+// 直近1年分を新しい順に返す（古い記録で比較が歪まないように）
+async function listPrices(env) {
+  const since = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+  let results = [];
+  let cursor;
+  do {
+    const body = {
+      page_size: 100,
+      filter: {
+        or: [
+          { property: PR.date, date: { on_or_after: since } },
+          { property: PR.date, date: { is_empty: true } },
+        ],
+      },
+      sorts: [{ property: PR.date, direction: 'descending' }],
+    };
+    if (cursor) body.start_cursor = cursor;
+    const d = await notion(env, 'POST', `/databases/${env.PRICE_DATABASE_ID}/query`, body);
+    results = results.concat(d.results || []);
+    cursor = d.has_more ? d.next_cursor : null;
+  } while (cursor);
+  return results.map(parsePrice);
+}
+
+function parsePrice(page) {
+  const p = page.properties || {};
+  const text = (arr) => (arr || []).map((t) => t.plain_text || (t.text && t.text.content) || '').join('');
+  const sel = (k) => (p[k] && p[k].select ? p[k].select.name : null);
+  return {
+    id: page.id,
+    name: text(p[PR.name] && p[PR.name].title),
+    price: p[PR.price] ? p[PR.price].number : null,
+    store: sel(PR.store),
+    date: p[PR.date] && p[PR.date].date ? p[PR.date].date.start : (page.created_time || '').slice(0, 10),
+    sale: !!(p[PR.sale] && p[PR.sale].checkbox),
+    category: sel(PR.category),
+    memo: text(p[PR.memo] && p[PR.memo].rich_text),
+  };
 }

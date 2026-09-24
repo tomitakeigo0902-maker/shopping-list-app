@@ -786,23 +786,29 @@ const App = (() => {
   let currentMode = 'todo';
 
   function switchMode(mode) {
+    if (!['todo', 'shop', 'price'].includes(mode)) mode = 'todo';
     currentMode = mode;
     document.querySelectorAll('.mode-btn').forEach(b =>
       b.classList.toggle('mode-btn--active', b.dataset.mode === mode));
 
     const isShop = mode === 'shop';
-    // 買い物モードのときだけ、買い物用の画面と操作を見せる
-    document.getElementById('viewTodo').classList.toggle('view--active', !isShop);
+    document.getElementById('viewTodo').classList.toggle('view--active', mode === 'todo');
+    document.getElementById('viewPrice').classList.toggle('view--active', mode === 'price');
+    // 買い物モードのときだけ、買い物用の下タブと追加ボタンを見せる
     document.getElementById('bottomNav').style.display = isShop ? '' : 'none';
     document.getElementById('fabAdd').style.display = isShop ? '' : 'none';
     ['viewList', 'viewHistory', 'viewFavorites'].forEach(id => {
       const el = document.getElementById(id);
       if (el && !isShop) el.classList.remove('view--active');
     });
+
+    const titles = { todo: '✅ やること', shop: '🛒 買い物リスト', price: '💴 価格比較' };
     const ttl = document.querySelector('.header__title');
-    if (ttl) ttl.textContent = isShop ? '🛒 買い物リスト' : '✅ やること';
+    if (ttl) ttl.textContent = titles[mode];
+
     if (isShop) switchView('list');
-    else if (window.Todo) { Todo.render(); Todo.refresh(); }
+    else if (mode === 'todo' && window.Todo) { Todo.render(); Todo.refresh(); }
+    else if (mode === 'price' && window.Prices) { Prices.render(); Prices.refresh(); }
     try { localStorage.setItem('sl_mode', mode); } catch {}
   }
 
@@ -832,6 +838,7 @@ const App = (() => {
         renderList();
       }
       if (window.Todo) await Todo.refresh();
+      if (window.Prices && currentMode === 'price') await Prices.refresh();
       setSyncStatus('ok');
     } catch (e) {
       setSyncStatus('error');
@@ -895,6 +902,7 @@ const App = (() => {
       if (b) switchMode(b.dataset.mode);
     });
     if (window.Todo) { Todo.load(); Todo.bind(); }
+    if (window.Prices) { Prices.load(); Prices.bind(); }
     let savedMode = 'todo';
     try { savedMode = localStorage.getItem('sl_mode') || 'todo'; } catch {}
     switchMode(savedMode);
