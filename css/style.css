@@ -1375,3 +1375,11 @@ html.is-desktop {
 .is-desktop .price-row { font-size: 11.5px; padding: 3px 0; }
 .is-desktop .price-row__date { font-size: 10px; width: 30px; }
 .is-desktop .price-hist__row { font-size: 10.5px; }
+
+/* 容量違いを単価で比べるときの表示 */
+.price-tag--size { background: var(--tone-3); color: var(--tone-sub); }
+.price-row__unit { display: block; line-height: 1.2; }
+.price-row__pack { display: block; font-size: 10px; color: #6f7681; text-align: right; line-height: 1.2; }
+.price-row__price { text-align: right; }
+.price-hist__row small { font-size: 10px; color: #6f7681; }
+.is-desktop .price-row__pack { font-size: 9px; }
