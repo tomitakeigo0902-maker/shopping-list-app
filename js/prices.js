@@ -120,7 +120,10 @@ const Prices = (() => {
       if (!g.rows.has(rowKey)) g.rows.set(rowKey, { store, amount: sz.amount, regular: null, sale: null });
       const row = g.rows.get(rowKey);
       const slot = r.sale ? 'sale' : 'regular';
-      if (!row[slot] || (r.date || '') > (row[slot].date || '')) row[slot] = r;
+      // 新しい日付を優先。同じ日に同じ店・同じ容量が複数あれば（銘柄違いなど）安い方を使う
+      const cur = row[slot];
+      if (!cur || (r.date || '') > (cur.date || '') ||
+          ((r.date || '') === (cur.date || '') && price < Number(cur.price))) row[slot] = r;
     }
 
     // 同じ一般名で単位の種類が複数ある場合（例: キャベツ 1玉 と キャベツ 500g）は見出しで区別する
