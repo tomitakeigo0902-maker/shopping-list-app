@@ -10,6 +10,7 @@
  *  - 容量が違う記録が混ざる商品は、100gあたり（液体は100ml、個数物は1個あたり）の単価で比べる
  *  - 店×容量ごとに「最新の通常価格」を使う（特売で比べると、いつも安い店が分からなくなるため）
  *  - 通常価格より新しい特売があれば参考として横に出す。特売の記録しか無ければ特売価格で代用する
+ *  - 一般名は大まかにまとめる（鮭・米など）。銘柄や種類はメモにあるので、一番安い行だけメモを表示する
  */
 'use strict';
 
@@ -141,6 +142,7 @@ const Prices = (() => {
           price,
           unitPrice: perUnit(price),
           date: pick.date,
+          memo: pick.memo || '',
           saleOnly: !row.regular,
           salePrice,
           saleUnitPrice: salePrice != null ? perUnit(salePrice) : null,
@@ -264,7 +266,7 @@ const Prices = (() => {
             ? `<span class="price-row__unit">${unitYen(r.unitPrice)}</span><span class="price-row__pack">${yen(r.price)}</span>`
             : yen(r.price)}</span>
           <span class="price-row__date">${md(r.date)}</span>
-        </div>`;
+        </div>${i === 0 && r.memo ? `<div class="price-row__memo">📝 ${esc(r.memo)}</div>` : ''}`;
       }).join('');
 
       const open = openKeys.has(p.key);

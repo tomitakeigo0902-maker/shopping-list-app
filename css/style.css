@@ -1361,6 +1361,8 @@ html.is-desktop {
 }
 .price-hist__row span:last-child { color: var(--tone-on); font-variant-numeric: tabular-nums; }
 .price-hist__row em { font-style: normal; font-size: 10px; color: #f5c14b; }
+.price-row__memo { font-size: 11px; color: #9aa3ad; padding: 0 0 4px 4px; line-height: 1.35; word-break: break-all; }
+.is-desktop .price-row__memo { font-size: 10px; }
 .price-hist__memo { font-size: 11px; color: #6f7681; padding: 0 0 4px 46px; }
 
 /* PCウィジェット用に詰める */
